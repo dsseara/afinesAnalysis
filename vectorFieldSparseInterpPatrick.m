@@ -53,8 +53,8 @@ for i = 1:length(Pg)
     dist = sqrt((pt(:,1)-Pi(:,1)).^2+(pt(:,2)-Pi(:,2)).^2);
     keep = find(dist<threshold);
     if size(keep,1)>0
-    compare = [ones(length(keep),1)*i keep dist(keep)];
-    newD = vertcat(newD,compare);
+        compare = [ones(length(keep),1)*i keep dist(keep)];
+        newD = vertcat(newD,compare);
     end
     clear compare keep dist
 end
