@@ -7,10 +7,9 @@ function Mi=vectorFieldSparseInterpPatrick(M,Pg,threshold,d0,polygon)
 %
 % SYNOPSIS   Mi=vectorFieldSparseInterp(M,Pg,threshold,d0,polygon)
 %
-% INPUT      M         : vector field, stored in a (nx4)-matrix of the form [y0 x0 y x]n
-%                        (where (y0,x0) is the base and (y,x) is the tip of
-%                        the vector).
-%            Pg        : regular grid points, stored in a (mx2)-matrix of the form [yg xg]m.
+% INPUT      M         : vector field, stored in a (nx4)-matrix of the form [x0 y0 vx vy]n
+%                        (where (x0,y0) is the base and (vx,vy) is the vector).
+%            Pg        : regular grid points, stored in a (mx2)-matrix of the form [xg yg]m.
 %            threshold : radius to calculate the sparse distance matrix (see help
 %                        createSparseDistanceMatrix)
 %            d0        : parameter for the weight function G=exp(-D.^2/(1+d0^2)),
@@ -32,6 +31,7 @@ function Mi=vectorFieldSparseInterpPatrick(M,Pg,threshold,d0,polygon)
 % Aaron Ponti, 02/11/2004
 % Edited Patrick Oakes 02/07/2011 - Made it work without the MEX file.  Probably not smart to try it on a
 % really large matrix, but for an image it's fine. 
+% Edited by Daniel Seara 01/11/2017 - Made this function take in vectors in a sane format, similar to quiver
 
 % Check d0
 if size(d0)~=[1 1]
@@ -42,7 +42,7 @@ end
 Pi=M(:,1:2);
 
 % Vectors
-V=[M(:,3)-M(:,1) M(:,4)-M(:,2)];
+V=M(:,3:4);
 
 % Calculate distances
 % D=createSparseDistanceMatrix(Pg,Pi,threshold); - this is the original MEX file line
