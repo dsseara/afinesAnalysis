@@ -1,6 +1,6 @@
 % Script for creating an interpolated velocity field from
 % position of actin beads from AFiNeS simulation
-
+% 
 % Daniel Seara at 2017/01/09 21:54
 
 clear;
@@ -33,45 +33,43 @@ xCoords = adata(:,1,1:numTimeSteps:end);
 yCoords = adata(:,2,1:numTimeSteps:end);
 xBases = squeeze(xCoords(:,:,1:end-1));
 yBases = squeeze(yCoords(:,:,1:end-1));
-vX = adataVel(:,1,:);
-vY = adataVel(:,2,:);
+vX = squeeze(adataVel(:,1,:));
+vY = squeeze(adataVel(:,2,:));
 
-%clear adata, adataVel
+clear adata adataVel;
 
 minX = floor(min(min(xCoords)));
 minY = floor(min(min(yCoords)));
 maxX =  ceil(max(max(xCoords)));
 maxY =  ceil(max(max(yCoords)));
 
-xRange = maxX - minX;
-yRange = maxY - minY;
+frame = floor(0.5*numFrames);
+vxTest = vX(:,frame);
+vyTest = vY(:,frame);
+xbaseTest = xBases(:,frame);
+ybaseTest = yBases(:,frame);
+xRange = [minX maxX];
+yRange = [minY maxY];
 
-binedgesX = minX:L:maxX;
-binedgesY = minY:L:maxY;
+vMags = sqrt(vxTest.^2 + vyTest.^2);
+vxTest(vMags>(mean(vMags) + 10*std(vMags)))=[];
+vyTest(vMags>(mean(vMags) + 10*std(vMags)))=[];
+xbaseTest(vMags>(mean(vMags) + 10*std(vMags)))=[];
+ybaseTest(vMags>(mean(vMags) + 10*std(vMags)))=[];
+
+vTest = binVectors(xbaseTest,ybaseTest,vxTest,vyTest,xRange,yRange,1,0);
+subplot(1,2,1)
+quiver(xbaseTest, ybaseTest, vxTest, vyTest)
+title('Test frame velocities')
+subplot(1,2,2)
+quiver(vTest(:,1), vTest(:,2), vTest(:,3), vTest(:,4))
+title('Test binned velocities')
+
+
 
 % Struction of binnedVel will be [x y vx vy] where
 % (x,y) is average starting position, (vx, vy) is average velocity in
-tic
-disp('Entering for loop...')
-binnedVel = [];
-% n is a threshold number of beads to consider for each bin
-n = 5;
-for i = 1:numel(binedgesX)-1
-    xEdge = binedgesX(i);
-    indX = xBases >= xEdge & xBases < xEdge+L;
-    for j = 1:numel(binedgesY)-1
-        yEdge = binedgesY(j);
-        indY = yBases >= yEdge & yBases < yEdge+L;
 
-        vXTemp(j) = mean(vX(indX & indY));
-        vYTemp(j) = mean(vY(indX & indY));
-        xBasesTemp(j) = mean(xBases(indX & indY));
-        yBasesTemp(j) = mean(yBases(indX & indY));
-    end
-    binnedVel = [binnedVel; xBasesTemp' yBasesTemp' vXTemp' vYTemp'];
-end
-disp('Exiting for loop...')
-toc
 
 % %% Ignore 10% of linear range around the edges to avoid effects from periodic boundary conditions
 % indX = xCoords > (minX + 0.05*xRange) & xCoords < (maxX - 0.05*xRange);
@@ -82,35 +80,35 @@ toc
 % nx4 matrix of form [y0 x0 y x]n, y0 x0 are base of vectors, y,x are tips
 % base is given by xCoords and yCoords, tips by xCoords+vx, similarly for y
 
-adataVelFormatted = [yCoords(:,:,1:end-1) xCoords(:,:,1:end-1) yCoords(:,:,1:end-1)+vY xCoords(:,:,1:end-1)+vX];
+% adataVelFormatted = [yCoords(:,:,1:end-1) xCoords(:,:,1:end-1) yCoords(:,:,1:end-1)+vY xCoords(:,:,1:end-1)+vX];
 
-% Make grid size mx2 of form [yg xg]m, grid size dr
+% % Make grid size mx2 of form [yg xg]m, grid size dr
 
-dr = 1;
-[xGrid, yGrid] = meshgrid(minX:dr:maxX, minY:dr:maxY);
-gridMat = [yGrid(:) xGrid(:)];
+% dr = 1;
+% [xGrid, yGrid] = meshgrid(minX:dr:maxX, minY:dr:maxY);
+% gridMat = [yGrid(:) xGrid(:)];
 
-threshold = 1;
-d0 = 5*dr; % Freedman et al 2016, S2
-polygon = [];
+% threshold = 1;
+% d0 = 5*dr; % Freedman et al 2016, S2
+% polygon = [];
 
-% Interpolate test frame
-frame = floor(numFrames*0.5);
-testVec = adataVelFormatted(:,:,frame);
-testInterp = vectorFieldSparseInterpPatrick(testVec, gridMat, threshold, d0, polygon);
+% % Interpolate test frame
+% frame = floor(numFrames*0.5);
+% testVec = adataVelFormatted(:,:,frame);
+% testInterp = vectorFieldSparseInterpPatrick(testVec, gridMat, threshold, d0, polygon);
 
-interpedVX = reshape(testInterp(:,4), length(minX:dr:maxX), length(minX:dr:maxX));
-interpedVY = reshape(testInterp(:,3), length(minY:dr:maxY), length(minY:dr:maxY));
+% interpedVX = reshape(testInterp(:,4), length(minX:dr:maxX), length(minX:dr:maxX));
+% interpedVY = reshape(testInterp(:,3), length(minY:dr:maxY), length(minY:dr:maxY));
 
-% Now we compare the results of the interpolated field with the original one
-figure()
-quiver(xGrid, yGrid, interpedVX, interpedVY,5)
-title('Interpolated')
-figure()
-quiver(squeeze(xCoords(:,:,frame)), squeeze(yCoords(:,:,frame)), squeeze(vX(:,:,frame)), squeeze(vY(:,:,frame)),5)
-title('Original')
-% legend('Interpolated', 'Original')
-% title('Velocity Field interpolation test')
-% hold off
+% % Now we compare the results of the interpolated field with the original one
+% figure()
+% quiver(xGrid, yGrid, interpedVX, interpedVY,5)
+% title('Interpolated')
+% figure()
+% quiver(squeeze(xCoords(:,:,frame)), squeeze(yCoords(:,:,frame)), squeeze(vX(:,:,frame)), squeeze(vY(:,:,frame)),5)
+% title('Original')
+% % legend('Interpolated', 'Original')
+% % title('Velocity Field interpolation test')
+% % hold off
 
 toc
