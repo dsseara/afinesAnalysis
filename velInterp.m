@@ -5,7 +5,7 @@
 
 clear;
 close all;
-
+tic
 % Returns simdata.mat if doesn't exist already
 %run([pwd, 'read_data2.m']);
 fname = 'simdata.mat';
@@ -31,6 +31,8 @@ L=1;
 
 xCoords = adata(:,1,1:numTimeSteps:end);
 yCoords = adata(:,2,1:numTimeSteps:end);
+xBases = squeeze(xCoords(:,:,1:end-1));
+yBases = squeeze(yCoords(:,:,1:end-1));
 vX = adataVel(:,1,:);
 vY = adataVel(:,2,:);
 
@@ -44,9 +46,32 @@ maxY =  ceil(max(max(yCoords)));
 xRange = maxX - minX;
 yRange = maxY - minY;
 
-%bincenters = 
+binedgesX = minX:L:maxX;
+binedgesY = minY:L:maxY;
 
+% Struction of binnedVel will be [x y vx vy] where
+% (x,y) is average starting position, (vx, vy) is average velocity in
+tic
+disp('Entering for loop...')
+binnedVel = [];
+% n is a threshold number of beads to consider for each bin
+n = 5;
+for i = 1:numel(binedgesX)-1
+    xEdge = binedgesX(i);
+    indX = xBases >= xEdge & xBases < xEdge+L;
+    for j = 1:numel(binedgesY)-1
+        yEdge = binedgesY(j);
+        indY = yBases >= yEdge & yBases < yEdge+L;
 
+        vXTemp(j) = mean(vX(indX & indY));
+        vYTemp(j) = mean(vY(indX & indY));
+        xBasesTemp(j) = mean(xBases(indX & indY));
+        yBasesTemp(j) = mean(yBases(indX & indY));
+    end
+    binnedVel = [binnedVel; xBasesTemp' yBasesTemp' vXTemp' vYTemp'];
+end
+disp('Exiting for loop...')
+toc
 
 % %% Ignore 10% of linear range around the edges to avoid effects from periodic boundary conditions
 % indX = xCoords > (minX + 0.05*xRange) & xCoords < (maxX - 0.05*xRange);
@@ -87,3 +112,5 @@ title('Original')
 % legend('Interpolated', 'Original')
 % title('Velocity Field interpolation test')
 % hold off
+
+toc
