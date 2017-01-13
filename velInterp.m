@@ -122,6 +122,7 @@ interpedVY(isnan(interpedVY))=0;
 div = divergence(xGrid, yGrid, interpedVX, interpedVY);
 imagesc([-25,25],[-25,25],div')
 colorbar
+set(gca, 'YDir', 'normal')
 hold on
 quiver(vTest(:,1), vTest(:,2), vTest(:,3), vTest(:,4),'k')
 title(str)
