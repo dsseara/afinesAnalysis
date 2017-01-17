@@ -31,6 +31,7 @@ function Mi=vectorFieldSparseInterpPatrick(M,Pg,threshold,d0,polygon)
 % Aaron Ponti, 02/11/2004
 % Edited Patrick Oakes 02/07/2011 - Made it work without the MEX file.  Probably not smart to try it on a
 % really large matrix, but for an image it's fine. 
+%
 % Edited by Daniel Seara 01/11/2017 - Made this function take in vectors in a sane format, similar to quiver
 
 % Check d0

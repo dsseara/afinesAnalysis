@@ -3,7 +3,7 @@ function vBinned = binVectors(xBase, yBase, vx, vy, xRange, yRange, binSize, thr
 % For each bin, the average vector and starting position is returned. 
 % First removes any vectors that are larger than mean(magnitudes) + 10*std(magnitudes)
 % 
-% vBinned = binVectors(V, bases xRange, yRange, binSize)
+% vBinned = binVectors(xBases, yBases, vx, vy, xRange, yRange, binSize)
 % 
 % INPUTS    x         : (Nx1) vector of x-coordinate of base of vectors                  |
 %           y         : (Nx1) vector of y-coordinate of base of vectors                  | These four are identical
@@ -29,6 +29,8 @@ vBinned = [];
 vMags = sqrt(vx.^2 + vy.^2);
 vx(vMags>(mean(vMags) + 10*std(vMags)))=[];
 vy(vMags>(mean(vMags) + 10*std(vMags)))=[];
+xBase(vMags>(mean(vMags) + 10*std(vMags)))=[];
+yBase(vMags>(mean(vMags) + 10*std(vMags)))=[];
 
 binedgesX = xRange(1):binSize:xRange(2);
 binedgesY = yRange(1):binSize:yRange(2);

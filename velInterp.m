@@ -15,7 +15,7 @@ load(fname, vars{:});
 
 % Change this if you want to find velocities for steps longer than 
 % the time between frames
-numTimeSteps = 1;
+numTimeSteps = 2;
 
 xyDisplacement = diff(adata(:,1:2, 1:numTimeSteps:end),1,3);
 [numBeads, dim, numFrames] = size(xyDisplacement);
@@ -36,54 +36,37 @@ vY = squeeze(adataVel(:,2,:));
 
 %clear adata adataVel;
 
-minX = floor(min(min(xCoords)));
-minY = floor(min(min(yCoords)));
-maxX =  ceil(max(max(xCoords)));
-maxY =  ceil(max(max(yCoords)));
-
 % Test of bin velocity function
 % bins of binSize and have a threshold number nThresh in each bin
 binSize=1;
-nThresh = 0;
+nThresh = 2;
+str = sprintf('Threshold n = %f \n', nThresh);
+disp(str);
 
 testFrame = floor(0.1*numFrames);
 vxTest = vX(:,testFrame);
 vyTest = vY(:,testFrame);
 xbaseTest = xBases(:,testFrame);
 ybaseTest = yBases(:,testFrame);
-xRange = [minX maxX];
-yRange = [minY maxY];
-
-vMags = sqrt(vxTest.^2 + vyTest.^2);
-vxTest(vMags>(mean(vMags) + 10*std(vMags)))=[];
-vyTest(vMags>(mean(vMags) + 10*std(vMags)))=[];
-xbaseTest(vMags>(mean(vMags) + 10*std(vMags)))=[];
-ybaseTest(vMags>(mean(vMags) + 10*std(vMags)))=[];
+xRange = [floor(min(min(xCoords))) ceil(max(max(xCoords)))];
+yRange = [floor(min(min(yCoords))) ceil(max(max(yCoords)))];
 
 vTest = binVectors(xbaseTest,ybaseTest,vxTest,vyTest,xRange,yRange,binSize, nThresh);
-
-% Create vector matrix to be input into vectorFieldSparseInterpPatrick.m
-% nx4 matrix of form [x0 y0 vx vy]n, (x0,y0) are base of vectors, (vx,vy) are the vectors themselves
-% base is given by xCoords and yCoords, tips by xCoords+vx, similarly for y
-
-adataVelFormatted = [xbaseTest ybaseTest vxTest vyTest];
 
 % Make grid size mx2 of form [xg yg]m, grid size dr
 
 dr = 1;
-[xGrid, yGrid] = meshgrid(minX:dr:maxX, minY:dr:maxY);
+[xGrid, yGrid] = meshgrid(xRange(1):dr:xRange(2), yRange(1):dr:yRange(2));
 gridMat = [xGrid(:) yGrid(:)];
 
+% Interpolate test frame
 threshold = 1;
 d0 = 5*binSize; % Freedman et al 2016, S2
 polygon = [];
+testInterp = vectorFieldSparseInterpPatrick(vTest, gridMat, threshold, d0, polygon);
 
-% Interpolate test frame
-%testVec = adataVelFormatted(:,testFrame);
-testInterp = vectorFieldSparseInterpPatrick(adataVelFormatted, gridMat, threshold, d0, polygon);
-
-interpedVX = reshape(testInterp(:,4), length(minX:dr:maxX), length(minX:dr:maxX));
-interpedVY = reshape(testInterp(:,3), length(minY:dr:maxY), length(minY:dr:maxY));
+interpedVX = reshape(testInterp(:,3), length(xGrid(1,:)), length(xGrid(:,1)));
+interpedVY = reshape(testInterp(:,4), length(yGrid(1,:)), length(yGrid(:,1)));
 
 % Now we compare the results of the interpolated field with the original one
 % This part copied from plotsimdata.m
@@ -120,9 +103,10 @@ figure()
 interpedVX(isnan(interpedVX))=0;
 interpedVY(isnan(interpedVY))=0;
 div = divergence(xGrid, yGrid, interpedVX, interpedVY);
-imagesc([-25,25],[-25,25],div')
+pcolor(xGrid, yGrid, div)
+shading interp;
+axis image;
 colorbar
-set(gca, 'YDir', 'normal')
 hold on
 quiver(vTest(:,1), vTest(:,2), vTest(:,3), vTest(:,4),'k')
 title(str)
