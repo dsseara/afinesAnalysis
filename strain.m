@@ -1,43 +1,48 @@
-function tensor = strain(xpos, ypos, dx, dy)
+function [strainTensor,strainEvecs,strainEvals] = strain(dx,dy,hx,hy)
 % strain takes a set of vectors on a grid and returns the associated symmetric strain tensor
 %
 % vBinned = binVectors(xBases, yBases, vx, vy, xRange, yRange, binSize)
 % 
-% INPUTS    xpos   : An [M 1] matrix with the bases of the vectors in the x direction
-%           ypos   : An [N 1] matrix with the bases of the vectors in the y direction
-%           dx     : An [M N] matrix with x displacements for each grid point
+% INPUTS    dx     : An [M N] matrix with x displacements for each grid point
 %           dy     : An [M N] matrix with y displacements for each grid point
-%
-%           NOTE   : If xpos and ypos are be given as a grid, they are converted to 
-%                    a vector
+%           hx     : grid spacing in x direction, default 1
+%           hy     : grid spacing in y direction, default 1
+%           
 %
 % OUTPUTS   tensor : An [M N 2 2] matrix. For example, the symmetric strain tensor at
 %                    position (x,y) is given by tensor(x,y,:,:)
-
+%
 % Created by Daniel Seara at 2017/01/17 13:32
 % https://github.com/dsseara
 
-% Check dimensionality of xpos and ypos
-if sum(size(xpos)~=1) && sum(size(ypos)~=1)
-    xpos = xpos(1,:);
-    ypos = ypos(:,1);
-elseif sum(size(xpos)~=1) || sum(size(ypos)~=1)
-    error('Gave one grid and one vector for positions')
+
+if nargin<2
+    error('Need two scalar fields to describe a vector field \n')
+elseif nargin==2
+    hx=1;
+    hy=1;
+elseif nargin==3
+    hy=hx;
+else
+    error('Too many inputs \n');
 end
 
-% Get spacing between grid points
-hx = unique(diff(xpos));
-hy = unique(diff(ypos));
+strainTensor = zeros([size(dx) 2 2]);
+strainEvals  = zeros([size(dx) 2 2]);
+strainEvecs  = zeros([size(dx) 2 2]);
+[dxdx, dxdy] = gradient(dx, hx, hy);
+[dydx, dydy] = gradient(dy, hx, hy);
 
-A = [1 0 0 0; 0 0.5 0.5 0; 0 0 0 1]; %transformation matrix to go from derivs to symmetric
-tensor = zeroes([size(dx) 2 2]);
-[dxdx, dydx] = gradient(dx, hx);
-[dxdy, dydy] = gradient(dy, hy);
+if sum(sum(dxdx==0))==numel(dxdx) || sum(sum(dxdy==0))==numel(dxdy) || sum(sum(dydx==0))==numel(dydx) || sum(sum(dydy==0))==numel(dydy)
+    error('Got all zeros in the gradient! PANIC!')
+end
+
 for i=1:size(dx,1)
     for j=1:size(dx,2)
-        E = (A*[dxdx(i,j); dydx(i,j); dxdy(i,j); dydy(i,j)])';
-        e = [E(1) E(2); E(2) E(3)];
-        tensor(i,j,:,:) = [xpos(i) ypos(j) e];
+        gradV = [dxdx(i,j), dxdy(i,j); dydx(i,j), dydy(i,j)];
+        symStrain = (0.5) * (gradV + gradV');
+        strainTensor(i,j,:,:) = symStrain;
+        [strainEvecs(i,j,:,:), strainEvals(i,j,:,:)] = eig(symStrain);
     end
 end
 

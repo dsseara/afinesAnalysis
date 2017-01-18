@@ -108,7 +108,7 @@ shading interp;
 axis image;
 colorbar
 hold on
-quiver(vTest(:,1), vTest(:,2), vTest(:,3), vTest(:,4),'k')
+quiver(xGrid, yGrid, interpedVX, interpedVY,'k')
 title(str)
 
 toc
