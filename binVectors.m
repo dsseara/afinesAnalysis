@@ -5,8 +5,8 @@ function vBinned = binVectors(xBase, yBase, vx, vy, xRange, yRange, binSize, thr
 % 
 % vBinned = binVectors(xBases, yBases, vx, vy, xRange, yRange, binSize)
 % 
-% INPUTS    x         : (Nx1) vector of x-coordinate of base of vectors                  |
-%           y         : (Nx1) vector of y-coordinate of base of vectors                  | These four are identical
+% INPUTS    xBase     : (Nx1) vector of x-coordinate of base of vectors                  |
+%           yBase     : (Nx1) vector of y-coordinate of base of vectors                  | These four are identical
 %           vx        : (Nx1) vector of x-component of vector at corresponding (x,y)     | to quiver input
 %           vy        : (Nx1) vector of y-component of vector at corresponding (x,y)     |
 %           xRange    : size of velocity field area, a (1x2) vector of form [xMin xMax]
@@ -43,12 +43,15 @@ for i = 1:numel(binedgesX)-1
         indY = yBase >= yEdge & yBase < yEdge+binSize;
         inThisBin = indX & indY;
         
-        if sum(inThisBin)<threshold || sum(inThisBin)==0 % do nothing if there's not enough vectors in the bin
+        if sum(inThisBin)<threshold % do nothing if there's not enough vectors in the bin
         else
             vBinned = [vBinned; mean(xBase(inThisBin)) mean(yBase(inThisBin)) mean(vx(inThisBin)) mean(vy(inThisBin))];
         end
     end
 end
 
+if isempty(vBinned)
+    vBinned = zeros(1,4);
+end
 
 %binnedVecs = [binnedVecs; repmat(xEdge, 1,1,numFrames) repmat(yEdge, 1,1,numFrames) reshape(sum(ind),1,1,numFrames)];

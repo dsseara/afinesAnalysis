@@ -23,7 +23,7 @@ elseif nargin==2
     hy=1;
 elseif nargin==3
     hy=hx;
-else
+elseif nargin>4
     error('Too many inputs \n');
 end
 
@@ -32,10 +32,6 @@ strainEvals  = zeros([size(dx) 2 2]);
 strainEvecs  = zeros([size(dx) 2 2]);
 [dxdx, dxdy] = gradient(dx, hx, hy);
 [dydx, dydy] = gradient(dy, hx, hy);
-
-if sum(sum(dxdx==0))==numel(dxdx) || sum(sum(dxdy==0))==numel(dxdy) || sum(sum(dydx==0))==numel(dydx) || sum(sum(dydy==0))==numel(dydy)
-    error('Got all zeros in the gradient! PANIC!')
-end
 
 for i=1:size(dx,1)
     for j=1:size(dx,2)
