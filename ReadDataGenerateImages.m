@@ -1,8 +1,8 @@
 clear
 close all
 %%
-run([pwd,'\read_data2.m']);
-run([pwd,'\mkactintiffs.m']);
+run('read_data2.m');
+run('mkactintiffs.m');
 
 % %%
 % folder = 'actin_tiffs';

@@ -1,7 +1,14 @@
 clear
-afile = fopen([pwd,'\txt_stack\actins.txt'],'r');
-mfile = fopen([pwd,'\txt_stack\amotors.txt'],'r');
-pfile = fopen([pwd,'\txt_stack\pmotors.txt'],'r');
+if ispc %change delimiter based on machine being used
+    afile = fopen([pwd,'\txt_stack\actins.txt'], 'r');
+    mfile = fopen([pwd,'\txt_stack\amotors.txt'],'r');
+    pfile = fopen([pwd,'\txt_stack\pmotors.txt'],'r');
+elseif ismac
+    afile = fopen([pwd,'/txt_stack/actins.txt'], 'r');
+    mfile = fopen([pwd,'/txt_stack/amotors.txt'],'r');
+    pfile = fopen([pwd,'/txt_stack/pmotors.txt'],'r');
+end
+
 i=1;
 
 % read actin file

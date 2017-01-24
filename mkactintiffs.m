@@ -1,6 +1,10 @@
-load([pwd,'\simdata.mat']);
-
-if exist([pwd,'\actin_tiffs'])==0, mkdir([pwd,'\actin_tiffs']); end
+if ispc
+    load([pwd,'\simdata.mat']);
+    if exist([pwd,'\actin_tiffs'])==0, mkdir([pwd,'\actin_tiffs']); end
+elseif ismac
+    load([pwd,'/simdata.mat']);
+    if exist([pwd,'/actin_tiffs'])==0, mkdir([pwd,'/actin_tiffs']); end
+end
 
 %specify size of the plot (1 inch = 100 pixels)
 units = 'inches';
