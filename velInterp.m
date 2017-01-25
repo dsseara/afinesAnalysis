@@ -17,13 +17,14 @@ load(fname, vars{:});
 % the time between frames
 numTimeSteps = 1;
 
-xyDisplacement = diff(adata(:,1:2, 1:numTimeSteps:end),1,3);
+% Enforce periodic boundary conditions
+xyDisplacement = mod(diff(adata(:,1:2, 1:numTimeSteps:end),1,3) + L/2, L) - L/2;
 
 [numBeads, dim, numFrames] = size(xyDisplacement);
 dt = numTimeSteps*uniquetol(diff(timestep));
 
 xCoords = adata(:,1,1:numTimeSteps:end);
-yCoords = adata(:,2,1:numTimeSteps:end);
+yCoords = adata(:,2,1:numTimeSteps:end); clear adata;
 xBases = squeeze(xCoords(:,:,1:end-1)); clear xCoords;
 yBases = squeeze(yCoords(:,:,1:end-1)); clear yCoords;
 xRange = [floor(min(min(xBases))) ceil(max(max(xBases)))];
@@ -36,8 +37,8 @@ vy = dy./dt;
 
 % Bin velocities before interpolating to reduce noise
 % bins of binSize and have a threshold number nThresh in each bin
-binSize=1;
-nThresh = 5;
+binSize=1; % in um
+nThresh = 5; % Found by trial and error
 
 % Make grid size mx2 of form [xg yg]m, grid size dr
 dr = binSize;
@@ -45,11 +46,9 @@ dr = binSize;
 gridMat = [xGrid(:) yGrid(:)];
 
 
-interpRadius = 2*binSize; % radius of interpolation region
-d0 = 5*binSize; % Freedman et al 2016, S2, width of Gaussian to weight
+interpRadius = 2*binSize; % radius of interpolation region, anything beyond it is not considered
+d0 = 5*binSize; % Freedman et al 2016, S2, width of Gaussian to weight (wider than interpRadius? Seems odd..)
 polygon = [];
-
-% Initialize arrays for storage of strain and Strain Rate time series
 
 adataVelInterped = NaN([size(xGrid) dim numFrames]);
 
@@ -60,6 +59,7 @@ for i=1:numFrames
     xbaseFrame = xBases(:,i);
     ybaseFrame = yBases(:,i);
     
+    % Bin vectors within bins of size binSize, get average position and value if have at least nThresh beads in that bin
     vBinned  = binVectors(xbaseFrame,ybaseFrame,vxFrame,vyFrame,xRange,yRange,binSize,nThresh);
 
     % Interpolate frame

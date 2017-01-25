@@ -3,7 +3,7 @@ if ispc %change delimiter based on machine being used
     afile = fopen([pwd,'\txt_stack\actins.txt'], 'r');
     mfile = fopen([pwd,'\txt_stack\amotors.txt'],'r');
     pfile = fopen([pwd,'\txt_stack\pmotors.txt'],'r');
-elseif ismac
+elseif isunix
     afile = fopen([pwd,'/txt_stack/actins.txt'], 'r');
     mfile = fopen([pwd,'/txt_stack/amotors.txt'],'r');
     pfile = fopen([pwd,'/txt_stack/pmotors.txt'],'r');
@@ -81,5 +81,8 @@ while feof(pfile) == 0
 end
 
 fclose(pfile);
-
-save([pwd,'\simdata.mat']); % Added by IL - 10/25/16
+if ispc
+    save([pwd,'\simdata.mat']); % Added by IL - 10/25/16
+elseif isunix
+    save([pwd,'/simdata.mat']);
+end
