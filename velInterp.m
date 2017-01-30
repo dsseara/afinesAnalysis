@@ -15,25 +15,27 @@ load(fname, vars{:});
 
 % Change this if you want to find velocities for steps longer than 
 % the time between frames
-numTimeSteps = 1;
+params.numTimeSteps = 1;
 
-% Enforce periodic boundary conditions
-xyDisplacement = mod(diff(adata(:,1:2, 1:numTimeSteps:end),1,3) + L/2, L) - L/2;
+xCoords = adata(:,1,1:numTimeSteps:end);
+yCoords = adata(:,2,1:numTimeSteps:end);
+xBases = squeeze(xCoords(:,:,1:end-1)); clear xCoords;
+yBases = squeeze(yCoords(:,:,1:end-1)); clear yCoords;
+params.xRange = [floor(min(min(xBases))) ceil(max(max(xBases)))];
+params.yRange = [floor(min(min(yBases))) ceil(max(max(yBases)))];
+
+% Enforce periodic boundary conditions, L is the average of the two linear dimensions of the simualtion
+L = mean(diff(xRange), diff(yRange));
+
+xyDisplacement = mod(diff(adata(:,1:2, 1:numTimeSteps:end),1,3) + L/2, L) - L/2; clear adata;
 
 [numBeads, dim, numFrames] = size(xyDisplacement);
 dt = numTimeSteps*uniquetol(diff(timestep));
 
-xCoords = adata(:,1,1:numTimeSteps:end);
-yCoords = adata(:,2,1:numTimeSteps:end); clear adata;
-xBases = squeeze(xCoords(:,:,1:end-1)); clear xCoords;
-yBases = squeeze(yCoords(:,:,1:end-1)); clear yCoords;
-xRange = [floor(min(min(xBases))) ceil(max(max(xBases)))];
-yRange = [floor(min(min(yBases))) ceil(max(max(yBases)))];
-
 dx = squeeze(xyDisplacement(:,1,:));
 dy = squeeze(xyDisplacement(:,2,:)); clear xyDisplacement;
-vx = dx./dt;
-vy = dy./dt;
+v.x = dx./dt; clear dx;
+v.y = dy./dt; clear dy;
 
 % Bin velocities before interpolating to reduce noise
 % bins of binSize and have a threshold number nThresh in each bin
@@ -46,7 +48,7 @@ dr = binSize;
 gridMat = [xGrid(:) yGrid(:)];
 
 
-interpRadius = 2*binSize; % radius of interpolation region, anything beyond it is not considered
+interpRadius = binSize; % radius of interpolation region, anything beyond it is not considered
 d0 = 5*binSize; % Freedman et al 2016, S2, width of Gaussian to weight (wider than interpRadius? Seems odd..)
 polygon = [];
 
@@ -54,8 +56,8 @@ adataVelInterped = NaN([size(xGrid) dim numFrames]);
 
 for i=1:numFrames
     disp(i)
-    vxFrame = vx(:,i);
-    vyFrame = vy(:,i);
+    vxFrame = v.x(:,i);
+    vyFrame = v.y(:,i);
     xbaseFrame = xBases(:,i);
     ybaseFrame = yBases(:,i);
     
@@ -74,5 +76,5 @@ for i=1:numFrames
     adataVelInterped(:,:,2,i) = interpedVY;
    
 end % end loop over all the frames
-save([pwd,'/interpedData.mat'] )
+save([pwd,'/interpedData2.mat'] )
 toc

@@ -2,9 +2,17 @@
 
 clear, close all
 
-fname = 'interpedData.mat';
-myVars = {'adata', 'adataVelInterped', 'xGrid', 'yGrid'};
+fname = 'interpedData2.mat';
+myVars = {'adataVelInterped', 'xGrid', 'yGrid'};
 load(fname, myVars{:});
+load('simdata.mat', 'adata')
+
+% params.npoly = 500;
+% params.xmin = -25;
+% params.ymin = -25;
+% params.xmax = 25;
+% params.ymax = 25;
+% params.totalTime = size(adata,3);
 
 npoly = 500;
 xmin = -25;
@@ -40,6 +48,6 @@ for i=1:timestep:totalTime
     set(gca,'ytick',[])
     set(gca,'yticklabel',[])
     axis tight 
-    saveas(gcf, [pwd, '/Overlay/highThreshold/' ,num2str(count), '.tif'])
+    saveas(gcf, [pwd, '/Overlay/interpRadius_1/' ,num2str(count), '.tif'])
     close all
 end
