@@ -2,6 +2,8 @@
 % in a contractile actomyosin gel as a function of varying motor and cross-linker concentrations.
 % Assumes that there are a list of files with names of the form a_x.x_p_y.y, where x.x and y.y 
 % are the concentrations used in the enclosing folder, from 0.0-1.0 in 0.1 increments.
+%
+% Created by Daniel Seara at 2017/01/30 15:47
 
 %%
 % First we just get all the data we can
