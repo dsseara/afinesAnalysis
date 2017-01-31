@@ -39,3 +39,27 @@ end
 
 clear;
 toc
+
+load phaseSpaceData.mat
+
+% Plot colormap of strain
+pcolor(aGrid,pGrid,epsMat);
+xlabel('$Active \; motor \; concentration (\mu m ^{-2})$', 'Interpreter','latex')
+ylabel('$Passive \; motor \; concentration (\mu m ^{-2})$', 'Interpreter', 'latex')
+shading interp;
+c = colorbar;
+ylabel(c, '$\epsilon_{max}$', 'Interpreter', 'latex')
+saveas(gcf, 'strainPhaseSpace', 'fig');
+saveas(gcf, 'strainPhaseSpace', 'epsc');
+
+% Plot colormap of strain rate
+pcolor(aGrid,pGrid,epsdotMat);
+xlabel('$Active \; motor \; concentration (\mu m ^{-2})$', 'Interpreter','latex')
+ylabel('$Passive \; motor \; concentration (\mu m ^{-2})$', 'Interpreter', 'latex')
+shading interp;
+c = colorbar;
+ylabel(c, '$\dot{\epsilon}_{max} \; (s^{-1})$', 'Interpreter', 'latex')
+saveas(gcf, 'strainRatePhaseSpace', 'fig');
+saveas(gcf, 'strainRatePhaseSpace', 'epsc');
+
+
