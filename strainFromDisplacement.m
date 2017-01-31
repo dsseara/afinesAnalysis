@@ -37,6 +37,7 @@ function [epsMax, epsdotMax] = strainFromDisplacement(fname, numTimeSteps)
         disp('No simdata.mat file')
         disp('No folder txt_stack with actins.txt inside, so can"t make simdata.mat')
         disp('Do it yourself.')
+        return
     end
 
     dataFile = 'simdata.mat';
