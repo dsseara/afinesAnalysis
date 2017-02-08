@@ -1,7 +1,7 @@
 clear
 close all
 %%
-run('read_data2.m');
+run('read_data.m');
 run('mkactintiffs.m');
 
 % %%
