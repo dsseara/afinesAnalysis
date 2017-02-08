@@ -30,23 +30,6 @@ function [epsMax, epsdotMax] = strainFromDisplacement(fname, numTimeSteps)
     cd(fname);
     disp(fname)
 
-% MOVED CODE TO NEW FUNCTION 'run_read_data.m'
-%
-%     if exist('simdata.mat', 'file') && sum(strfind(fname,'0.0')) %Check for simulations with zero density conditions & run 'read_data3.m' to fix the 'timestep' variable
-%         disp(sprintf('Simulation with zero motor or crosslinker density\nRunning ''read_data3.m'' to fix the initial value of the ''timestep'' variable'))
-%         run read_data4.m;
-%     elseif ~exist('simdata.mat', 'file') && exist('txt_stack', 'file') %Changed to elseif due to new leading if statement (IAL:1/31/17)
-% %     if ~exist('simdata.mat', 'file') && exist('txt_stack', 'file')
-%         disp('Need simdata.mat file, will create one now')
-% %         run read_data2.m;
-%         run read_data4.m; %Most recent version of the function (IAL: 1/31/17)
-%     elseif ~exist('simdata.mat', 'file') && ~exist('txt_stack', 'file')
-%         disp('No simdata.mat file')
-%         disp('No folder txt_stack with actins.txt inside, so can"t make simdata.mat')
-%         disp('Do it yourself.')
-%         return
-%     end
-
     run_read_data(fname)
 
     dataFile = 'simdata.mat';
