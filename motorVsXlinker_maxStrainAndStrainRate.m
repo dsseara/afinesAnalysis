@@ -40,6 +40,11 @@ end
 clear;
 toc
 
+% Copied some code prior to clear statement for plotting (IAL: 1/31/17)
+aRange = 0:0.1:1;
+pRange = 0:0.1:1;
+[aGrid,pGrid] = meshgrid(aRange, pRange);
+
 load phaseSpaceData.mat
 
 % Plot colormap of strain
