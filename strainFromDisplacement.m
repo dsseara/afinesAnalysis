@@ -33,21 +33,16 @@ function [epsMax, epsdotMax] = strainFromDisplacement(fname, numTimeSteps)
     run_read_data(fname)
 
     dataFile = 'simdata.mat';
-    vars = {'adata', 'timestep'};
+    vars = {'adata', 'timestep', 'params'};
     load(dataFile, vars{:});
 
     % Find time step between frames
     params.dt = numTimeSteps*uniquetol(diff(timestep));
 
-    % Find linear dimension of simulation box
-    xCoords = adata(:,1,1:numTimeSteps:end);
-    yCoords = adata(:,2,1:numTimeSteps:end);
-    xRange = [floor(min(min(squeeze(xCoords)))) ceil(max(max(squeeze(xCoords))))];
-    yRange = [floor(min(min(squeeze(yCoords)))) ceil(max(max(squeeze(yCoords))))];
-    params.L = mean(diff(xRange), diff(yRange));
+    % Find linear dimension of box
+    params.L = mean(diff(params.xRange), diff(params.yRange));
 
     % Enforce periodic boundary conditions
-
     xyDisplacement = mod(diff(adata(:,1:2, 1:numTimeSteps:end),1,3) + params.L/2, params.L) - params.L/2;
     dx = squeeze(xyDisplacement(:,1,:));
     dy = squeeze(xyDisplacement(:,2,:));

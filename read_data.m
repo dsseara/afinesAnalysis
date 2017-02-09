@@ -24,18 +24,24 @@ while feof(afile) == 0
         Key2='N';
         Index1 = strfind(strtemp, Key1);
         Index2 = strfind(strtemp, Key2);
-        timestep(ii) = sscanf(strtemp(Index1(1) + length(Key1):end), '%g', 1);
-        anum(i) = sscanf(strtemp(Index2(1) + length(Key2):end), '%g', 1);
+        params.timestep(ii) = sscanf(strtemp(Index1(1) + length(Key1):end), '%g', 1);
+        params.anum(i) = sscanf(strtemp(Index2(1) + length(Key2):end), '%g', 1);
         
         ii = ii+1; % Increment timestep counter every loop  
     else   
-           for j = 1 : 1: anum(i)-1
+           for j = 1 : 1: params.anum(i)-1
                adata(j,:,i) = str2num(fgetl(afile));
            end
            i=i+1;
     end
 
 end
+
+params.xRange = [floor(min(min(adata(:,1,:)))), ceil(max(max(adata(:,1,:))))]; % Get size of domain in x direction
+params.yRange = [floor(min(min(adata(:,2,:)))), ceil(max(max(adata(:,2,:))))]; % Get size of domain in y direction
+params.L = mean(diff(params.xRange), diff(params.yRange));
+params.dt = uniquetol(diff(params.timestep));
+params.npoly = squeeze(max(adata(:,4,:))) + 1; % Get the number of polymers in each time step, add 1 to account for zero indexing
 
 fclose(afile);
 
@@ -54,12 +60,13 @@ while feof(mfile) == 0
         Key2='N';
         Index1 = strfind(strtemp, Key1);
         Index2 = strfind(strtemp, Key2);
-        timestep(ii) = sscanf(strtemp(Index1(1) + length(Key1):end), '%g', 1);
-        mnum(i) = sscanf(strtemp(Index2(1) + length(Key2):end), '%g', 1);
+%        no need to calculate timestep array >1 times... (DSS at 2017/02/08 18:40)
+%        timestep(ii) = sscanf(strtemp(Index1(1) + length(Key1):end), '%g', 1);
+        params.mnum(i) = sscanf(strtemp(Index2(1) + length(Key2):end), '%g', 1);
         
         ii = ii+1; % Increment timestep counter every loop
     else   
-           for j = 1 : 1: mnum(i)-1
+           for j = 1 : 1: params.mnum(i)-1
                mdata(j,:,i) = str2num(fgetl(mfile));
            end
            i=i+1;
@@ -84,12 +91,13 @@ while feof(pfile) == 0
         Key2='N';
         Index1 = strfind(strtemp, Key1);
         Index2 = strfind(strtemp, Key2);
-        timestep(ii) = sscanf(strtemp(Index1(1) + length(Key1):end), '%g', 1);
-        pnum(i) = sscanf(strtemp(Index2(1) + length(Key2):end), '%g', 1);
+%        no need to calculate timestep array >1 times... (DSS:at 2017/02/08 18:40)
+%        timestep(ii) = sscanf(strtemp(Index1(1) + length(Key1):end), '%g', 1); 
+        params.pnum(i) = sscanf(strtemp(Index2(1) + length(Key2):end), '%g', 1);
         
         ii = ii+1; % Increment timestep counter every loop  
     else   
-           for j = 1 : 1: pnum(i)-1
+           for j = 1 : 1: params.pnum(i)-1
                pdata(j,:,i) = str2num(fgetl(pfile));
            end
            i=i+1;
@@ -98,6 +106,9 @@ while feof(pfile) == 0
 end
 
 fclose(pfile);
+
+clearvars -except adata pdata mdata params
+
 if ispc
     save([pwd,'\simdata.mat']); % Added by IL - 10/25/16
 elseif isunix
