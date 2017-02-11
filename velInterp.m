@@ -10,32 +10,26 @@ tic
 % Returns simdata.mat if doesn't exist already
 %run([pwd, 'read_data2.m']);
 fname = 'simdata.mat';
-vars = {'adata', 'timestep'};
+vars = {'adata', 'params'};
 load(fname, vars{:});
 
 % Change this if you want to find velocities for steps longer than 
 % the time between frames
-params.numTimeSteps = 1;
+interpParams.dt = 10;
 
 xCoords = adata(:,1,1:numTimeSteps:end);
 yCoords = adata(:,2,1:numTimeSteps:end);
 xBases = squeeze(xCoords(:,:,1:end-1)); clear xCoords;
 yBases = squeeze(yCoords(:,:,1:end-1)); clear yCoords;
-params.xRange = [floor(min(min(xBases))) ceil(max(max(xBases)))];
-params.yRange = [floor(min(min(yBases))) ceil(max(max(yBases)))];
 
-% Enforce periodic boundary conditions, L is the average of the two linear dimensions of the simualtion
-L = mean(diff(xRange), diff(yRange));
-
-xyDisplacement = mod(diff(adata(:,1:2, 1:numTimeSteps:end),1,3) + L/2, L) - L/2; clear adata;
+xyDisplacement = mod(diff(adata(:,1:2, 1:numTimeSteps:end),1,3) + params.L/2, params.L) - params.L/2; clear adata;
 
 [numBeads, dim, numFrames] = size(xyDisplacement);
-dt = numTimeSteps*uniquetol(diff(timestep));
 
 dx = squeeze(xyDisplacement(:,1,:));
 dy = squeeze(xyDisplacement(:,2,:)); clear xyDisplacement;
-v.x = dx./dt; clear dx;
-v.y = dy./dt; clear dy;
+v.x = dx./interpParams.dt; clear dx;
+v.y = dy./interpParams.dt; clear dy;
 
 % Bin velocities before interpolating to reduce noise
 % bins of binSize and have a threshold number nThresh in each bin
@@ -44,7 +38,7 @@ nThresh = 5; % Found by trial and error
 
 % Make grid size mx2 of form [xg yg]m, grid size dr
 dr = binSize;
-[xGrid, yGrid] = meshgrid(xRange(1):dr:xRange(2), yRange(1):dr:yRange(2));
+[xGrid, yGrid] = meshgrid(params.xRange(1):dr:params.xRange(2), params.yRange(1):dr:params.yRange(2));
 gridMat = [xGrid(:) yGrid(:)];
 
 
@@ -65,7 +59,7 @@ for i=1:numFrames
     vBinned  = binVectors(xbaseFrame,ybaseFrame,vxFrame,vyFrame,xRange,yRange,binSize,nThresh);
 
     % Interpolate frame
-    vInterp = vectorFieldSparseInterpPatrick(vBinned,  gridMat, interpRadius, d0, polygon);
+    vInterp = vectorFieldSparseInterpPatrick(vBinned, gridMat, interpRadius, d0, polygon);
  
     interpedVX = reshape(vInterp(:,3), length(xGrid(1,:)), length(xGrid(:,1)));
     interpedVY = reshape(vInterp(:,4), length(yGrid(1,:)), length(yGrid(:,1)));
