@@ -1,15 +1,42 @@
-clear
+clear; close all;
 if ispc %change delimiter based on machine being used
     afile = fopen([pwd,'\txt_stack\actins.txt'], 'r');
     mfile = fopen([pwd,'\txt_stack\amotors.txt'],'r');
     pfile = fopen([pwd,'\txt_stack\pmotors.txt'],'r');
+
+    if afile == -1
+      error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'\txt_stack\actins.txt']);
+    elseif mfile == -1 
+      error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'\txt_stack\amotors.txt']);
+    elseif pfile == -1
+      error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'\txt_stack\pmotors.txt']);
+    end
+
 elseif isunix
     afile = fopen([pwd,'/txt_stack/actins.txt'], 'r');
     mfile = fopen([pwd,'/txt_stack/amotors.txt'],'r');
     pfile = fopen([pwd,'/txt_stack/pmotors.txt'],'r');
+
+    if afile == -1
+      error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/actins.txt']);
+    elseif mfile == -1 
+      error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/amotors.txt']);
+    elseif pfile == -1
+      error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/pmotors.txt']);
+    end
+
+end
+
+if afile == -1
+  error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/actins.txt']);
+elseif mfile == -1 
+  error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/amotors.txt']);
+elseif pfile == -1
+  error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/pmotors.txt']);
 end
 
 % read actin file
+disp('Reading actin file...')
 i=1;
 ii = 1; % Separate counter for timestep
 % Guarantees proper incrementing for simulations with zero motor or
@@ -42,10 +69,12 @@ params.yRange = [floor(min(min(adata(:,2,:)))), ceil(max(max(adata(:,2,:))))]; %
 params.L = mean(diff(params.xRange), diff(params.yRange));
 params.dt = uniquetol(diff(params.timestep));
 params.npoly = squeeze(max(adata(:,4,:))) + 1; % Get the number of polymers in each time step, add 1 to account for zero indexing
+[params.numBeads, params.dim, params.numFrames] = size(adata);
 
 fclose(afile);
 
 %read motor file
+disp('Reading motor file...')
 i=1;
 ii = 1; % Separate counter for timestep
 % Guarantees proper incrementing for simulations with zero motor or
@@ -77,6 +106,7 @@ end
 fclose(mfile);
 
 %read crosslink data file
+disp('Reading xlink file...')
 i=1;
 ii = 1; % Separate counter for timestep
 % Guarantees proper incrementing for simulations with zero motor or

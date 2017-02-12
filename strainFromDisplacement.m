@@ -33,26 +33,22 @@ function [epsMax, epsdotMax] = strainFromDisplacement(fname, numTimeSteps)
     run_read_data(fname)
 
     dataFile = 'simdata.mat';
-    vars = {'adata', 'timestep', 'params'};
+    vars = {'adata', 'params'};
     load(dataFile, vars{:});
 
     % Find time step between frames
-    params.dt = numTimeSteps*uniquetol(diff(timestep));
-
-    % Find linear dimension of box
-    params.L = mean(diff(params.xRange), diff(params.yRange));
+    DeltaT = numTimeSteps*params.dt;
 
     % Enforce periodic boundary conditions
     xyDisplacement = mod(diff(adata(:,1:2, 1:numTimeSteps:end),1,3) + params.L/2, params.L) - params.L/2;
-    dx = squeeze(xyDisplacement(:,1,:));
-    dy = squeeze(xyDisplacement(:,2,:));
-
-    cumDR = [zeros(size(dx,1),1), sqrt(cumsum(dx,2).^2 + cumsum(dy,2).^2)]./params.L;
+    dx = squeeze(xyDisplacement(:,1,:)); cumDX = cumsum(dx,2);
+    dy = squeeze(xyDisplacement(:,2,:)); cumDY = cumsum(dy,2);
+    cumDR = [zeros(size(dx,1),1), sqrt(cumDX.^2 + cumDY.^2)]./params.L;
 
     eps = mean(cumDR);
     epsMax = max(eps);
 
-    plot(timestep,eps);
+    plot(params.timestep,eps);
     xlabel('time (s)')
     ylabel('$\epsilon (t)$', 'Interpreter', 'latex')
     title(fname, 'Interpreter', 'none')
@@ -71,38 +67,38 @@ function [epsMax, epsdotMax] = strainFromDisplacement(fname, numTimeSteps)
     
     clf reset;
 
-    epsdot = diff(eps)./params.dt;
-    epsdotMax = max(epsdot);
+    % epsdot = diff(eps)./params.dt;
+    % epsdotMax = max(epsdot);
 
-    plot(timestep(2:end-1),epsdot(2:end)); %first data point of epsdot seems to be huge all the time? Unsure why...
-    xlabel('time (s)')
-    ylabel('$\dot{\epsilon} (t) \; (s^{-1})$', 'Interpreter', 'latex')
-    title(fname, 'Interpreter', 'none')
+    % plot(timestep(2:end-1),epsdot(2:end)); %first data point of epsdot seems to be huge all the time? Unsure why...
+    % xlabel('time (s)')
+    % ylabel('$\dot{\epsilon} (t) \; (s^{-1})$', 'Interpreter', 'latex')
+    % title(fname, 'Interpreter', 'none')
     
-    % Make figure prettier...
-    ax=findall(gca,'Type','line');
-    for i=1:length(ax)
-        set(ax(i),'linewidth',2);
-    end
-    ax=findall(gcf,'Type','text');
-    for i=1:length(ax)
-        set(ax(i),'fontname','times','fontsize',14);
-    end
-    saveas(gcf, 'strainRateSeries', 'fig');
-    saveas(gcf, 'strainRateSeries', 'epsc');
+    % % Make figure prettier...
+    % ax=findall(gca,'Type','line');
+    % for i=1:length(ax)
+    %     set(ax(i),'linewidth',2);
+    % end
+    % ax=findall(gcf,'Type','text');
+    % for i=1:length(ax)
+    %     set(ax(i),'fontname','times','fontsize',14);
+    % end
+    % saveas(gcf, 'strainRateSeries', 'fig');
+    % saveas(gcf, 'strainRateSeries', 'epsc');
 
-    clf reset;
+    % clf reset;
 
-    clearvars -except eps epsdot params epsMax epsdotMax
+    % clearvars -except eps epsdot params epsMax epsdotMax
 
-    if ispc
-        save([pwd,'\straindata.mat'], 'eps', 'epsdot', 'params');
-    elseif isunix
-        save([pwd,'/straindata.mat'], 'eps', 'epsdot', 'params');
-    end
+    % if ispc
+    %     save([pwd,'\straindata.mat'], 'eps', 'epsdot', 'params');
+    % elseif isunix
+    %     save([pwd,'/straindata.mat'], 'eps', 'epsdot', 'params');
+    % end
 
     cd ..
 
-    clearvars -except epsMax epsdotMax
+    % clearvars -except epsMax epsdotMax
     toc
 end % end of function

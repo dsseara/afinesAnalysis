@@ -13,42 +13,41 @@ fname = 'simdata.mat';
 vars = {'adata', 'params'};
 load(fname, vars{:});
 
-% Change this if you want to find velocities for steps longer than 
-% the time between frames
-interpParams.dt = 10;
-
-xCoords = adata(:,1,1:numTimeSteps:end);
-yCoords = adata(:,2,1:numTimeSteps:end);
-xBases = squeeze(xCoords(:,:,1:end-1)); clear xCoords;
-yBases = squeeze(yCoords(:,:,1:end-1)); clear yCoords;
-
-xyDisplacement = mod(diff(adata(:,1:2, 1:numTimeSteps:end),1,3) + params.L/2, params.L) - params.L/2; clear adata;
-
-[numBeads, dim, numFrames] = size(xyDisplacement);
-
-dx = squeeze(xyDisplacement(:,1,:));
-dy = squeeze(xyDisplacement(:,2,:)); clear xyDisplacement;
-v.x = dx./interpParams.dt; clear dx;
-v.y = dy./interpParams.dt; clear dy;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Set all parameters for interpolation
+[numBeads, dim, numFrames] = size(adata);
+binParams.numTimeSteps = 10; % How many frames between which to calculate velocity
+binParams.DeltaT = binParams.numTimeSteps*params.dt;
 
 % Bin velocities before interpolating to reduce noise
 % bins of binSize and have a threshold number nThresh in each bin
-binSize=1; % in um
-nThresh = 5; % Found by trial and error
+binParams.binSize = 1; % in um
+binParams.nThresh = 5; % Found by trial and error
+
+interpParams.dr = binParams.binSize; % Size of grid to interpolate to
+interpParams.interpRadius = binParams.binSize; % radius of interpolation region, anything beyond it is not considered
+interpParams.d0 = 5 * binParams.binSize; % Freedman et al 2016, S2, width of Gaussian to weight (wider than interpRadius? Seems odd..)
+interpParams.polygon = [];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+xCoords = adata(:,1,1:binParams.numTimeSteps:numFrames);
+yCoords = adata(:,2,1:binParams.numTimeSteps:numFrames);
+xBases = squeeze(xCoords(:,:,1:end-1));
+yBases = squeeze(yCoords(:,:,1:end-1));
+
+dx = squeeze(mod(diff(xCoords,1,3) + params.L/2, params.L) - params.L/2);
+dy = squeeze(mod(diff(yCoords,1,3) + params.L/2, params.L) - params.L/2);
+v.x = dx./binParams.DeltaT;
+v.y = dy./binParams.DeltaT;
 
 % Make grid size mx2 of form [xg yg]m, grid size dr
-dr = binSize;
-[xGrid, yGrid] = meshgrid(params.xRange(1):dr:params.xRange(2), params.yRange(1):dr:params.yRange(2));
-gridMat = [xGrid(:) yGrid(:)];
+[grid.x, grid.y] = meshgrid(params.xRange(1):interpParams.dr:params.xRange(2), params.yRange(1):interpParams.dr:params.yRange(2));
+gridMat = [grid.x(:) grid.y(:)];
 
+grid.vx = NaN([size(grid.x) size(v.x,2)]);
+grid.vy = NaN([size(grid.y) size(v.y,2)]);
 
-interpRadius = binSize; % radius of interpolation region, anything beyond it is not considered
-d0 = 5*binSize; % Freedman et al 2016, S2, width of Gaussian to weight (wider than interpRadius? Seems odd..)
-polygon = [];
-
-adataVelInterped = NaN([size(xGrid) dim numFrames]);
-
-for i=1:numFrames
+for i=1:size(v.x,2)
     disp(i)
     vxFrame = v.x(:,i);
     vyFrame = v.y(:,i);
@@ -56,19 +55,21 @@ for i=1:numFrames
     ybaseFrame = yBases(:,i);
     
     % Bin vectors within bins of size binSize, get average position and value if have at least nThresh beads in that bin
-    vBinned  = binVectors(xbaseFrame,ybaseFrame,vxFrame,vyFrame,xRange,yRange,binSize,nThresh);
+    vBinned  = binVectors(xbaseFrame,ybaseFrame,vxFrame,vyFrame,params.xRange,params.yRange,binParams.binSize,binParams.nThresh);
 
     % Interpolate frame
-    vInterp = vectorFieldSparseInterpPatrick(vBinned, gridMat, interpRadius, d0, polygon);
+    vInterp = vectorFieldSparseInterpPatrick(vBinned, gridMat, interpParams.interpRadius, interpParams.d0, interpParams.polygon);
  
-    interpedVX = reshape(vInterp(:,3), length(xGrid(1,:)), length(xGrid(:,1)));
-    interpedVY = reshape(vInterp(:,4), length(yGrid(1,:)), length(yGrid(:,1)));
+    interpedVX = reshape(vInterp(:,3), length(grid.x(1,:)), length(grid.x(:,1)));
+    interpedVY = reshape(vInterp(:,4), length(grid.y(1,:)), length(grid.y(:,1)));
     interpedVX(isnan(interpedVX)) = 0;
     interpedVY(isnan(interpedVY)) = 0;
 
-    adataVelInterped(:,:,1,i) = interpedVX;
-    adataVelInterped(:,:,2,i) = interpedVY;
+    grid.vx(:,:,i) = interpedVX;
+    grid.vy(:,:,i) = interpedVY;
    
 end % end loop over all the frames
-save([pwd,'/interpedData2.mat'] )
+
+clearvars -except interpParams binParams grid v
+save([pwd,'/interpedData3.mat'] )
 toc

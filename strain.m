@@ -1,16 +1,22 @@
 function [strainTensor,strainEvecs,strainEvals] = strain(dx,dy,hx,hy)
 % strain takes a set of vectors on a grid and returns the associated symmetric strain tensor
 %
-% vBinned = binVectors(xBases, yBases, vx, vy, xRange, yRange, binSize)
+% [strainTensor, strainEvecs, strainEvals] = strain(dx,dy,hx,hy)
 % 
-% INPUTS    dx     : An [M N] matrix with x displacements for each grid point
-%           dy     : An [M N] matrix with y displacements for each grid point
-%           hx     : grid spacing in x direction, default 1
-%           hy     : grid spacing in y direction, default 1
+% INPUTS              dx : An [M N] matrix with x displacements for each grid point
+%                     dy : An [M N] matrix with y displacements for each grid point
+%                     hx : grid spacing in x direction, default 1
+%                     hy : grid spacing in y direction, default 1
 %           
 %
-% OUTPUTS   tensor : An [M N 2 2] matrix. For example, the symmetric strain tensor at
-%                    position (x,y) is given by tensor(x,y,:,:)
+% OUTPUTS   strainTensor : An [M N 2 2] matrix. For example, the symmetric strain tensor at
+%                          position (x,y) is given by tensor(x,y,:,:)
+%           strainEvecs  : An [M N 2 2] matrix. For example, the columns of the matrix at
+%                          strainEvecs(x,y,:,:) are the eigenvectors of the symmetric strain tensor
+%                          at tensor(x,y,:,:)
+%           strainEvals  : An [M N 2 2] matrix. For example, the diagaonal of the matrix at
+%                          strainEVals(x,y,:,:) are the eigenvalues of the symmetric strain tensor
+%                          at tensor(x,y,:,:)
 %
 % Created by Daniel Seara at 2017/01/17 13:32
 % https://github.com/dsseara

@@ -26,11 +26,11 @@ function vBinned = binVectors(xBase, yBase, vx, vy, xRange, yRange, binSize, thr
 vBinned = [];
 
 % Remove huge vectors
-vMags = sqrt(vx.^2 + vy.^2);
-vx(vMags>(mean(vMags) + 10*std(vMags)))=[];
-vy(vMags>(mean(vMags) + 10*std(vMags)))=[];
-xBase(vMags>(mean(vMags) + 10*std(vMags)))=[];
-yBase(vMags>(mean(vMags) + 10*std(vMags)))=[];
+% vMags = sqrt(vx.^2 + vy.^2);
+% vx(vMags>(mean(vMags) + 10*std(vMags)))=[];
+% vy(vMags>(mean(vMags) + 10*std(vMags)))=[];
+% xBase(vMags>(mean(vMags) + 10*std(vMags)))=[];
+% yBase(vMags>(mean(vMags) + 10*std(vMags)))=[];
 
 binedgesX = xRange(1):binSize:xRange(2);
 binedgesY = yRange(1):binSize:yRange(2);

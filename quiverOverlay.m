@@ -2,34 +2,30 @@
 
 clear, close all
 
-fname = 'interpedData2.mat';
-myVars = {'adataVelInterped', 'xGrid', 'yGrid'};
+fname = 'interpedData3.mat';
+myVars = {'grid', 'binParams'};
 load(fname, myVars{:});
-load('simdata.mat', 'adata')
+myVars = {'adata', 'params'};
+load('simdata.mat', myVars{:})
 
-% params.npoly = 500;
-% params.xmin = -25;
-% params.ymin = -25;
-% params.xmax = 25;
-% params.ymax = 25;
-% params.totalTime = size(adata,3);
 
-npoly = 500;
-xmin = -25;
-ymin = -25;
-xmax = 25;
-ymax = 25;
-totalTime = size(adata,3);
+xmin = params.xRange(1);
+ymin = params.xRange(1);
+xmax = params.yRange(2);
+ymax = params.yRange(2);
 
-timestep = 25;
+
+
+timestep = 1;
 count = 1;
+actinFrames = 1:binParams.numTimeSteps:size(adata,3);
 
-for i=1:timestep:totalTime
+for i=1:timestep:size(grid.vx,3)
     disp(i)
-    adat=adata(:,:,i);
+    adat=adata(:,:,actinFrames(i));
     figure;
     set(gcf,'Visible', 'off');
-    for k=1:1:npoly
+    for k=1:1:params.npoly
         idx=find(adat(:,4)==k-1);
         X1=adat(idx(:),1);Y1=adat(idx(:),2);
         ind=rangesearch([X1 Y1],[X1(1) Y1(1)],10);
@@ -37,7 +33,7 @@ for i=1:timestep:totalTime
         hold on
     end
 
-    quiver(xGrid, yGrid, adataVelInterped(:,:,1,i), adataVelInterped(:,:,2,i), 'k');
+    quiver(grid.x, grid.y, grid.vx(:,:,i), grid.vy(:,:,i), 'k');
 
     count=count+1;  
     xlim([xmin xmax])
@@ -48,6 +44,6 @@ for i=1:timestep:totalTime
     set(gca,'ytick',[])
     set(gca,'yticklabel',[])
     axis tight 
-    saveas(gcf, [pwd, '/Overlay/interpRadius_1/' ,num2str(count), '.tif'])
+    saveas(gcf, [pwd, '/Overlay/interp_timestep10/' ,num2str(count), '.tif'])
     close all
 end
