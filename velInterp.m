@@ -35,41 +35,41 @@ yCoords = adata(:,2,1:binParams.numTimeSteps:numFrames);
 xBases = squeeze(xCoords(:,:,1:end-1));
 yBases = squeeze(yCoords(:,:,1:end-1));
 
-dx = squeeze(mod(diff(xCoords,1,3) + params.L/2, params.L) - params.L/2);
-dy = squeeze(mod(diff(yCoords,1,3) + params.L/2, params.L) - params.L/2);
-v.x = dx./binParams.DeltaT;
-v.y = dy./binParams.DeltaT;
+d.x = squeeze(mod(diff(xCoords,1,3) + params.L/2, params.L) - params.L/2);
+d.y = squeeze(mod(diff(yCoords,1,3) + params.L/2, params.L) - params.L/2);
+%v.x = d.x./binParams.DeltaT;
+%v.y = d.y./binParams.DeltaT;
 
 % Make grid size mx2 of form [xg yg]m, grid size dr
 [grid.x, grid.y] = meshgrid(params.xRange(1):interpParams.dr:params.xRange(2), params.yRange(1):interpParams.dr:params.yRange(2));
 gridMat = [grid.x(:) grid.y(:)];
 
-grid.vx = NaN([size(grid.x) size(v.x,2)]);
-grid.vy = NaN([size(grid.y) size(v.y,2)]);
+grid.dx = NaN([size(grid.x) size(d.x,2)]);
+grid.dy = NaN([size(grid.y) size(d.y,2)]);
 
-for i=1:size(v.x,2)
+for i=1:size(d.x,2)
     disp(i)
-    vxFrame = v.x(:,i);
-    vyFrame = v.y(:,i);
+    dxFrame = d.x(:,i);
+    dyFrame = d.y(:,i);
     xbaseFrame = xBases(:,i);
     ybaseFrame = yBases(:,i);
     
     % Bin vectors within bins of size binSize, get average position and value if have at least nThresh beads in that bin
-    vBinned  = binVectors(xbaseFrame,ybaseFrame,vxFrame,vyFrame,params.xRange,params.yRange,binParams.binSize,binParams.nThresh);
+    dBinned  = binVectors(xbaseFrame,ybaseFrame,dxFrame,dyFrame,params.xRange,params.yRange,binParams.binSize,binParams.nThresh);
 
     % Interpolate frame
-    vInterp = vectorFieldSparseInterpPatrick(vBinned, gridMat, interpParams.interpRadius, interpParams.d0, interpParams.polygon);
+    dInterp = vectorFieldSparseInterpPatrick(dBinned, gridMat, interpParams.interpRadius, interpParams.d0, interpParams.polygon);
  
-    interpedVX = reshape(vInterp(:,3), length(grid.x(1,:)), length(grid.x(:,1)));
-    interpedVY = reshape(vInterp(:,4), length(grid.y(1,:)), length(grid.y(:,1)));
-    interpedVX(isnan(interpedVX)) = 0;
-    interpedVY(isnan(interpedVY)) = 0;
+    interpedDX = reshape(dInterp(:,3), length(grid.x(1,:)), length(grid.x(:,1)));
+    interpedDY = reshape(dInterp(:,4), length(grid.y(1,:)), length(grid.y(:,1)));
+    interpedDX(isnan(interpedDX)) = 0;
+    interpedDY(isnan(interpedDY)) = 0;
 
-    grid.vx(:,:,i) = interpedVX;
-    grid.vy(:,:,i) = interpedVY;
+    grid.dx(:,:,i) = interpedDX;
+    grid.dy(:,:,i) = interpedDY;
    
 end % end loop over all the frames
 
-clearvars -except interpParams binParams grid v
-save([pwd,'/interpedData3.mat'] )
+clearvars -except interpParams binParams grid d
+save([pwd,'/interpedData.mat'], '-append' )
 toc

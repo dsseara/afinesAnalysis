@@ -5,13 +5,18 @@
 
 clear; close all; tic;
 
-fname = 'interpedData3.mat';
+fname = 'interpedData.mat';
 myVars = {'grid','interpParams'};
 load(fname, myVars{:});
 fname = 'simdata.mat';
 myVars = {'adata', 'params'};
 load(fname, myVars{:})
 
+if isunix
+    mkdir('Overlay/heatmap');
+elseif ispc
+    mkdir('Overlay\heatmap');
+end
 
 [width, height, nFrames] = size(grid.vx);
 divV = zeros(size(grid.vx));
@@ -19,11 +24,7 @@ strainRate.tensor = zeros(width, height,2,2,nFrames);
 strainRate.evecs = zeros(width, height,2,2,nFrames);
 strainRate.evals = zeros(width, height,2,2,nFrames);
 
-% We are going to want to cut the system into an NxN grid and calculate the local divergence in each section. To do this we will first make sure that the given N actually cuts the grid up nicely
-N = 5;
-if mod(params.L/interpParams.dr,N) ~= 0
-    error('Currently trying to make %dx%d grid, but number of grid points aren"t divisible by %d', N,N,N)
-end
+
 figure
 for frame = 1:nFrames
     [tensor, evecs, evals] = strain(grid.vx(:,:,frame), grid.vy(:,:,frame), interpParams.dr);
@@ -32,28 +33,34 @@ for frame = 1:nFrames
     strainRate.evals(:,:,:,:,frame) = evals;
     divV(:,:,frame) = sum(sum(evals,3),4);
 
-%     pcolor(grid.x, grid.y, divV(:,:,frame))
-%     shading interp
-%     colormap jet
-%     caxis([-1.5, 1.5])
-%     colorbar;
-%     hold on;
-%     quiver(grid.x, grid.y, grid.vx(:,:,frame), grid.vy(:,:,frame),'k')
+    pcolor(grid.x, grid.y, divV(:,:,frame))
+    shading interp
+    colormap jet
+    caxis([-1.5, 1.5])
+    colorbar;
+    hold on;
+    quiver(grid.x, grid.y, grid.vx(:,:,frame), grid.vy(:,:,frame),'k')
     
-%     xlim([params.xRange(1) params.xRange(2)])
-%     ylim([params.yRange(1) params.yRange(2)])
-%     pbaspect([1 1 1])
-%     set(gca,'xtick',[])
-%     set(gca,'xticklabel',[])
-%     set(gca,'ytick',[])
-%     set(gca,'yticklabel',[])
-%     axis tight 
-%     saveas(gcf, [pwd, '/Overlay/heatmap/' ,num2str(frame), '.tif'])
-%     clf
+    xlim([params.xRange(1) params.xRange(2)])
+    ylim([params.yRange(1) params.yRange(2)])
+    pbaspect([1 1 1])
+    set(gca,'xtick',[])
+    set(gca,'xticklabel',[])
+    set(gca,'ytick',[])
+    set(gca,'yticklabel',[])
+    axis tight 
+
+    if isunix
+        saveas(gcf, [pwd, '/Overlay/heatmap/' ,num2str(frame), '.tif'])
+    elseif ispc
+        saveas(gcf, [pwd, '\Overlay\heatmap\' ,num2str(frame), '.tif'])
+    end
+
+    clf
 end
 
 savedVars = {'divV', 'strainRate'};
-save('interpedData3',savedVars{:}, '-append')
+save('interpedData',savedVars{:}, '-append')
 
 
 % errorbar(0:(numel(seriesStats.mean)-1), seriesStats.mean, seriesStats.std, 'o');

@@ -2,27 +2,28 @@
 
 clear, close all
 
-fname = 'interpedData3.mat';
+fname = 'interpedData.mat';
 myVars = {'grid', 'binParams'};
 load(fname, myVars{:});
 myVars = {'adata', 'params'};
 load('simdata.mat', myVars{:})
 
+if ~exist('Overlay','dir')
+    mkdir('Overlay')
+end
 
 xmin = params.xRange(1);
 ymin = params.xRange(1);
 xmax = params.yRange(2);
 ymax = params.yRange(2);
 
-
-
 timestep = 1;
 count = 1;
 actinFrames = 1:binParams.numTimeSteps:size(adata,3);
 
-for i=1:timestep:size(grid.vx,3)
-    disp(i)
-    adat=adata(:,:,actinFrames(i));
+for ii=1:timestep:size(grid.vx,3)
+    disp(ii)
+    adat=adata(:,:,actinFrames(ii));
     figure;
     set(gcf,'Visible', 'off');
     for k=1:1:params.npoly
@@ -33,9 +34,8 @@ for i=1:timestep:size(grid.vx,3)
         hold on
     end
 
-    quiver(grid.x, grid.y, grid.vx(:,:,i), grid.vy(:,:,i), 'k');
+    quiver(grid.x, grid.y, grid.vx(:,:,ii), grid.vy(:,:,ii), 'k');
 
-    count=count+1;  
     xlim([xmin xmax])
     ylim([ymin ymax])
     pbaspect([1 1 1])
@@ -44,6 +44,13 @@ for i=1:timestep:size(grid.vx,3)
     set(gca,'ytick',[])
     set(gca,'yticklabel',[])
     axis tight 
-    saveas(gcf, [pwd, '/Overlay/interp_timestep10/' ,num2str(count), '.tif'])
+
+    if isunix
+        saveas(gcf, [pwd, '/Overlay/' ,num2str(count), '.tif']);
+    elseif ispc
+        saveas(gcf, [pwd, '\Overlay\' ,num2str(count), '.tif']);
+    end
+
+    count=count+1;  
     close all
 end
