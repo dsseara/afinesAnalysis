@@ -13,10 +13,10 @@ function run_read_data(fname)
 % 
 % OUTPUTS   NONE
 
-if ~exist('simdata.mat', 'file') && exist('txt_stack', 'file') 
+if ~exist('simdata.mat', 'file') && exist('txt_stack', 'dir') 
     disp('Need simdata.mat file, will create one now')
     run read_data.m; %Most recent version of the function (IAL: 1/31/17)
-elseif ~exist('simdata.mat', 'file') && ~exist('txt_stack', 'file')
+elseif ~exist('simdata.mat', 'file') && ~exist('txt_stack', 'dir')
     disp('No simdata.mat file')
     disp('No folder txt_stack with actins.txt inside, so can"t make simdata.mat')
     disp('Do it yourself.')

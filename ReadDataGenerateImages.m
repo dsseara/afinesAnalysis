@@ -1,8 +1,13 @@
 clear
 close all
 %%
-run('read_data.m');
-run('mkactintiffs.m');
+run('read_data.m');     % Create simdata.mat file
+run('velInterp.m');     % Interpolate velocity and displacement fields to a grid
+run('divVelocity.m');   % Get the divergence of the velocity and displacement fields to get total normal strain and strain rates
+run('quiverOverlay.m'); % Generate images, quiver overlaid on filaments and on heatmap of velocity divergence
+
+
+%run('mkactintiffs.m');
 
 % %%
 % folder = 'actin_tiffs';

@@ -1,4 +1,4 @@
-% Script for creating an interpolated velocity field from
+% Script for creating an interpolated displacement and velocity field from
 % position of actin beads from AFiNeS simulation
 % 
 % Daniel Seara at 2017/01/09 21:54
@@ -8,7 +8,9 @@ close all;
 tic
 
 % Returns simdata.mat if doesn't exist already
-%run([pwd, 'read_data2.m']);
+run run_read_data.m
+
+
 fname = 'simdata.mat';
 vars = {'adata', 'params'};
 load(fname, vars{:});
@@ -37,8 +39,8 @@ yBases = squeeze(yCoords(:,:,1:end-1));
 
 d.x = squeeze(mod(diff(xCoords,1,3) + params.L/2, params.L) - params.L/2);
 d.y = squeeze(mod(diff(yCoords,1,3) + params.L/2, params.L) - params.L/2);
-%v.x = d.x./binParams.DeltaT;
-%v.y = d.y./binParams.DeltaT;
+v.x = d.x./binParams.DeltaT;
+v.y = d.y./binParams.DeltaT;
 
 % Make grid size mx2 of form [xg yg]m, grid size dr
 [grid.x, grid.y] = meshgrid(params.xRange(1):interpParams.dr:params.xRange(2), params.yRange(1):interpParams.dr:params.yRange(2));
@@ -46,30 +48,43 @@ gridMat = [grid.x(:) grid.y(:)];
 
 grid.dx = NaN([size(grid.x) size(d.x,2)]);
 grid.dy = NaN([size(grid.y) size(d.y,2)]);
+grid.vx = NaN([size(grid.x) size(d.x,2)]);
+grid.vy = NaN([size(grid.y) size(d.y,2)]);
 
-for i=1:size(d.x,2)
-    disp(i)
-    dxFrame = d.x(:,i);
-    dyFrame = d.y(:,i);
-    xbaseFrame = xBases(:,i);
-    ybaseFrame = yBases(:,i);
+for frame=1:size(d.x,2)
+    disp(['frame = ', num2str(frame)])
+    dxFrame = d.x(:,frame);
+    dyFrame = d.y(:,frame);
+    vxFrame = v.x(:,frame);
+    vyFrame = v.y(:,frame);
+    xbaseFrame = xBases(:,frame);
+    ybaseFrame = yBases(:,frame);
     
     % Bin vectors within bins of size binSize, get average position and value if have at least nThresh beads in that bin
-    dBinned  = binVectors(xbaseFrame,ybaseFrame,dxFrame,dyFrame,params.xRange,params.yRange,binParams.binSize,binParams.nThresh);
+    dBinned = binVectors(xbaseFrame, ybaseFrame, dxFrame, dyFrame, params.xRange, params.yRange, binParams.binSize, binParams.nThresh);
+    vBinned = binVectors(xbaseFrame, ybaseFrame, vxFrame, vyFrame, params.xRange, params.yRange, binParams.binSize, binParams.nThresh);
 
     % Interpolate frame
     dInterp = vectorFieldSparseInterpPatrick(dBinned, gridMat, interpParams.interpRadius, interpParams.d0, interpParams.polygon);
+    vInterp = vectorFieldSparseInterpPatrick(vBinned, gridMat, interpParams.interpRadius, interpParams.d0, interpParams.polygon);
  
     interpedDX = reshape(dInterp(:,3), length(grid.x(1,:)), length(grid.x(:,1)));
     interpedDY = reshape(dInterp(:,4), length(grid.y(1,:)), length(grid.y(:,1)));
     interpedDX(isnan(interpedDX)) = 0;
     interpedDY(isnan(interpedDY)) = 0;
 
-    grid.dx(:,:,i) = interpedDX;
-    grid.dy(:,:,i) = interpedDY;
+    interpedVX = reshape(vInterp(:,3), length(grid.x(1,:)), length(grid.x(:,1)));
+    interpedVY = reshape(vInterp(:,4), length(grid.y(1,:)), length(grid.y(:,1)));
+    interpedVX(isnan(interpedVX)) = 0;
+    interpedVY(isnan(interpedVY)) = 0;
+
+    grid.dx(:,:,frame) = interpedDX;
+    grid.dy(:,:,frame) = interpedDY;
+    grid.vx(:,:,frame) = interpedVX;
+    grid.vy(:,:,frame) = interpedVY;
    
 end % end loop over all the frames
 
-clearvars -except grid d
+clearvars -except grid d v
 save([pwd,'/interpedData.mat'], '-append' )
 toc

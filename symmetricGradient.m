@@ -40,12 +40,12 @@ evecs  = zeros([size(u) 2 2]);
 [dudx, dudy] = gradient(u, hx, hy);
 [dvdx, dvdy] = gradient(v, hx, hy);
 
-for i=1:size(u,1)
-    for j=1:size(u,2)
-        gradV = [dudx(i,j), dudy(i,j); dvdx(i,j), dvdy(i,j)];
+for ii=1:size(u,1)
+    for jj=1:size(u,2)
+        gradV = [dudx(ii,jj), dudy(ii,jj); dvdx(ii,jj), dvdy(ii,jj)];
         symTensor = (0.5) * (gradV + gradV');
-        tensor(i,j,:,:) = symTensor;
-        [evecs(i,j,:,:), evals(i,j,:,:)] = eig(symTensor);
+        tensor(ii,jj,:,:) = symTensor;
+        [evecs(ii,jj,:,:), evals(ii,jj,:,:)] = eig(symTensor);
     end
 end
 
