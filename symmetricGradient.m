@@ -2,7 +2,7 @@ function [tensor,evecs,evals] = symmetricGradient(u,v,hx,hy)
 % symmetricGradient takes a vector field on a grid and returns the symmetric part of the
 % vector field's gradient
 %
-% [strainTensor, strainEvecs, strainEvals] = strain(dx,dy,hx,hy)
+% [tensor, evecs, evals] = strain(u,v,hx,hy)
 % 
 % INPUTS         u : An [M N] matrix with x displacements for each grid point
 %                v : An [M N] matrix with y displacements for each grid point
@@ -40,8 +40,8 @@ evecs  = zeros([size(u) 2 2]);
 [dudx, dudy] = gradient(u, hx, hy);
 [dvdx, dvdy] = gradient(v, hx, hy);
 
-for i=1:size(dx,1)
-    for j=1:size(dx,2)
+for i=1:size(u,1)
+    for j=1:size(u,2)
         gradV = [dudx(i,j), dudy(i,j); dvdx(i,j), dvdy(i,j)];
         symTensor = (0.5) * (gradV + gradV');
         tensor(i,j,:,:) = symTensor;
