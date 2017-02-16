@@ -9,7 +9,7 @@ fname = 'interpedData.mat';
 myVars = {'grid','interpParams'};
 load(fname, myVars{:});
 fname = 'simdata.mat';
-myVars = {'adata', 'params'};
+myVars = {'params'};
 load(fname, myVars{:})
 
 if isunix
@@ -20,46 +20,46 @@ end
 
 [width, height, nFrames] = size(grid.vx);
 divV = zeros(size(grid.vx));
-strainRate.tensor = zeros(width, height,2,2,nFrames);
-strainRate.evecs = zeros(width, height,2,2,nFrames);
-strainRate.evals = zeros(width, height,2,2,nFrames);
+strain.tensor = zeros(width, height,2,2,nFrames);
+strain.evecs = zeros(width, height,2,2,nFrames);
+strain.evals = zeros(width, height,2,2,nFrames);
 
 
 figure
 for frame = 1:nFrames
-    [tensor, evecs, evals] = strain(grid.vx(:,:,frame), grid.vy(:,:,frame), interpParams.dr);
-    strainRate.tensor(:,:,:,:,frame) = tensor;
-    strainRate.evecs(:,:,:,:,frame) = evecs;
-    strainRate.evals(:,:,:,:,frame) = evals;
-    divV(:,:,frame) = sum(sum(evals,3),4);
+    [tensor, evecs, evals] = symmetricGradient(grid.vx(:,:,frame), grid.vy(:,:,frame), interpParams.dr);
+    strain.tensor(:,:,:,:,frame) = tensor;
+    strain.evecs(:,:,:,:,frame) = evecs;
+    strain.evals(:,:,:,:,frame) = evals;
+    divDR(:,:,frame) = sum(sum(evals,3),4);
 
-    pcolor(grid.x, grid.y, divV(:,:,frame))
-    shading interp
-    colormap jet
-    caxis([-1.5, 1.5])
-    colorbar;
-    hold on;
-    quiver(grid.x, grid.y, grid.vx(:,:,frame), grid.vy(:,:,frame),'k')
+    % pcolor(grid.x, grid.y, divDR(:,:,frame))
+    % shading interp
+    % colormap jet
+    % caxis([-1.5, 1.5])
+    % colorbar;
+    % hold on;
+    % quiver(grid.x, grid.y, grid.vx(:,:,frame), grid.vy(:,:,frame),'k')
     
-    xlim([params.xRange(1) params.xRange(2)])
-    ylim([params.yRange(1) params.yRange(2)])
-    pbaspect([1 1 1])
-    set(gca,'xtick',[])
-    set(gca,'xticklabel',[])
-    set(gca,'ytick',[])
-    set(gca,'yticklabel',[])
-    axis tight 
+    % xlim([params.xRange(1) params.xRange(2)])
+    % ylim([params.yRange(1) params.yRange(2)])
+    % pbaspect([1 1 1])
+    % set(gca,'xtick',[])
+    % set(gca,'xticklabel',[])
+    % set(gca,'ytick',[])
+    % set(gca,'yticklabel',[])
+    % axis tight 
 
-    if isunix
-        saveas(gcf, [pwd, '/Overlay/heatmap/' ,num2str(frame), '.tif'])
-    elseif ispc
-        saveas(gcf, [pwd, '\Overlay\heatmap\' ,num2str(frame), '.tif'])
-    end
+    % if isunix
+    %     saveas(gcf, [pwd, '/Overlay/heatmap/' ,num2str(frame), '.tif'])
+    % elseif ispc
+    %     saveas(gcf, [pwd, '\Overlay\heatmap\' ,num2str(frame), '.tif'])
+    % end
 
-    clf
+    % clf
 end
 
-savedVars = {'divV', 'strainRate'};
+savedVars = {'divDR', 'strain'};
 save('interpedData',savedVars{:}, '-append')
 
 

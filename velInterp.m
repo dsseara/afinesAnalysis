@@ -70,6 +70,6 @@ for i=1:size(d.x,2)
    
 end % end loop over all the frames
 
-clearvars -except interpParams binParams grid d
+clearvars -except grid d
 save([pwd,'/interpedData.mat'], '-append' )
 toc
