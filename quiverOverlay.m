@@ -6,8 +6,9 @@ clear, close all
 fname = 'interpedData.mat';
 myVars = {'grid', 'binParams', 'divV'};
 load(fname, myVars{:});
+fname = '/Users/Danny/Dropbox/LLM_Danny/Contractility/a_0.5_p_1.0_xyrange_100/simdata.mat';
 myVars = {'adata', 'params'};
-load('simdata.mat', myVars{:})
+load(fname, myVars{:})
 
 if isunix
     mkdir('Overlay/heatmap');
@@ -22,13 +23,13 @@ ymin = params.xRange(1);
 xmax = params.yRange(2);
 ymax = params.yRange(2);
 
-timestep = 1; % How many velocity frames to consider
+timestep = 10; % Plot every timestep-th frame
 count = 1;
-actinFrames = 1:binParams.numTimeSteps:size(adata,3); % The velocity was calculated between every numTimeSteps frames, so take that into account
+frames = 1:timestep:size(grid.vx,3);
 
-for ii=1:timestep:size(grid.vx,3)
+for ii=frames
     disp(count)
-    adat=adata(:,:,actinFrames(ii));
+    adat=adata(:,:,ii);
     
     figure;
     set(gcf,'Visible', 'off');
@@ -59,13 +60,13 @@ for ii=1:timestep:size(grid.vx,3)
 
     clf;
 
-    pcolor(grid.x, grid.y, divV(:,:,frame))
+    pcolor(grid.x, grid.y, divV(:,:,ii))
     shading interp
     colormap jet
     caxis([-2, 2])
     colorbar;
     hold on;
-    quiver(grid.x, grid.y, grid.vx(:,:,frame), grid.vy(:,:,frame),'k')
+    quiver(grid.x, grid.y, grid.vx(:,:,ii), grid.vy(:,:,ii),'k')
     
     xlim([params.xRange(1) params.xRange(2)])
     ylim([params.yRange(1) params.yRange(2)])

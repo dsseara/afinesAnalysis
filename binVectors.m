@@ -1,7 +1,6 @@
 function vBinned = binVectors(xBase, yBase, vx, vy, xRange, yRange, binSize, threshold)
 % binVectors takes a vector field and bins the vectors according to their starting position.
 % For each bin, the average vector and starting position is returned. 
-% First removes any vectors that are larger than mean(magnitudes) + 10*std(magnitudes)
 % 
 % vBinned = binVectors(xBases, yBases, vx, vy, xRange, yRange, binSize)
 % 
@@ -24,13 +23,6 @@ function vBinned = binVectors(xBase, yBase, vx, vy, xRange, yRange, binSize, thr
 
 
 vBinned = [];
-
-% Remove huge vectors
-% vMags = sqrt(vx.^2 + vy.^2);
-% vx(vMags>(mean(vMags) + 10*std(vMags)))=[];
-% vy(vMags>(mean(vMags) + 10*std(vMags)))=[];
-% xBase(vMags>(mean(vMags) + 10*std(vMags)))=[];
-% yBase(vMags>(mean(vMags) + 10*std(vMags)))=[];
 
 binedgesX = xRange(1):binSize:xRange(2);
 binedgesY = yRange(1):binSize:yRange(2);

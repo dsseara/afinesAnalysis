@@ -12,9 +12,9 @@ clear; close all; tic;
 fname = 'interpedData.mat';
 myVars = {'grid','interpParams'};
 load(fname, myVars{:});
-fname = 'simdata.mat';
-myVars = {'params'};
-load(fname, myVars{:})
+% fname = 'simdata.mat';
+% myVars = {'params'};
+% load(fname, myVars{:})
 
 [width, height, nFrames] = size(grid.vx);
 divV  = zeros(size(grid.vx));
