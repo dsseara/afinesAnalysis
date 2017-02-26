@@ -17,39 +17,41 @@ myVars = {'params'};
 load(fname, myVars{:});
 
 time = params.timestep(1:end-binParams.numTimeSteps); 
+cumStrain = abs(cumsum(divDR, 3));
 
 % Get size of polymers as a length scale...
 actin_length  = 0.5;    % From script, variable "actin_length", length of actin monomers in units of um
 nmonomer      = 11;     % Number of monomers in each filament
-polymerLength = floor(actin_length*nmonomer);  % Ensure that we use an integer. Unsure of whether to use floor or ceil. Can try both..
+polymerLength = floor(actin_length*nmonomer);  % Ensure that we use an integer
 
 % Look at everything between [-25, 25] in both directions
-innerXInd = grid.x(1,:)>=(-25) & grid.x(1,:)<=(25);
-innerYInd = grid.y(:,1)>=(-25) & grid.y(:,1)<=(25);
+innerXInd = grid.x(1,:)>=(-50) & grid.x(1,:)<=(50);
+innerYInd = grid.y(:,1)>=(-50) & grid.y(:,1)<=(50);
 
 innerStrain     = cumStrain(innerXInd, innerYInd, :);
 innerMeanStrain = squeeze(mean(mean(innerStrain)));
 
 % Get some statistics about the strain, the max and the slope to go from 25%-75% of the max value
 maxStrain = max(innerMeanStrain);
-[~, ind25] = min(abs(innerMeanStrain - 0.25*maxStrainAbs));
-[~, ind75] = min(abs(innerMeanStrain - 0.75*maxStrainAbs));
+[~, ind25] = min(abs(innerMeanStrain - 0.25*maxStrain));
+[~, ind75] = min(abs(innerMeanStrain - 0.75*maxStrain));
 strainRate2575 = (innerMeanStrain(ind75) - innerMeanStrain(ind25))./(time(ind75) - time(ind25));
 
 % Plot it up
+
 plot(time, innerMeanStrain)
 xlabel('time (s)')
 ylabel('$\langle |\epsilon|\rangle (t)$', 'Interpreter', 'latex')
-legend(sprintf('Max = %.02f, .25-.75 slope = %.02f', maxStrain, strainRate2575), 'Location', 'SouthEast')
-title({['Average strain']; ['Center region (50 um)^2']});
+legend(sprintf('Max = %.02f, slope(25-75) = %.02f', maxStrain, strainRate2575), 'Location', 'SouthEast')
+title({['Average strain']; ['Center region (100 um)^2']});
 prettyFig;
 
 if isunix
-    saveas(gcf, [pwd, '/strain.tif'])
-    saveas(gcf, [pwd, '/strain.fig'])
+    saveas(gcf, [pwd, '/strain_full.tif'])
+    saveas(gcf, [pwd, '/strain_full.fig'])
 elseif ispc
-    saveas(gcf, [pwd, '\strain.tif'])
-    saveas(gcf, [pwd, '\strain.fig'])
+    saveas(gcf, [pwd, '\strain_full.tif'])
+    saveas(gcf, [pwd, '\strain_full.fig'])
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
