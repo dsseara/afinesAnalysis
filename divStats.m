@@ -1,3 +1,4 @@
+function [maxStrain, strainRate2575] = divStats()
 % This script gets the statistics out of velocity divergence data output
 % running divVelocity.m on a simdata.mat data file that was generated using
 % read_data.m on the actins.txt output of an afines simulation

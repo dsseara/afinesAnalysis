@@ -1,5 +1,5 @@
 %%
-% Script for calculating and the divergence of the velocity and displacement fieldsfor Afines data
+% Script for calculating and the divergence of the velocity and displacement fields for Afines data
 % 
 % External files:   simdata.mat
 %                   interpedData.mat
