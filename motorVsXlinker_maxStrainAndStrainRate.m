@@ -30,6 +30,7 @@ for ii = 1:numel(aGrid)
     epsMat(ii) = maxStrain;
     epsdotMat(ii) = strainRate2575;
     fileMat{ii} = fname;
+    cd ..;
 end
 
 clearvars -except epsMat epsdotMat fileMat
