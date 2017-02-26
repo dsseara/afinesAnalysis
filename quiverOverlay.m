@@ -6,7 +6,7 @@ clear, close all
 fname = 'interpedData.mat';
 myVars = {'grid', 'binParams', 'divV'};
 load(fname, myVars{:});
-fname = '/Users/Danny/Dropbox/LLM_Danny/Contractility/a_0.5_p_1.0_xyrange_100/simdata.mat';
+fname = 'simdata.mat';
 myVars = {'adata', 'params'};
 load(fname, myVars{:})
 

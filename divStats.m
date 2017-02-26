@@ -1,30 +1,55 @@
-%%
-% This script gets the statistics out of velocity divergence data output running divVelocity.m on a simdata.mat data file that was generated using read_data.m on the actins.txt output of an afines simulation
+% This script gets the statistics out of velocity divergence data output
+% running divVelocity.m on a simdata.mat data file that was generated using
+% read_data.m on the actins.txt output of an afines simulation
+%
 %
 % Created by Daniel Seara at 2017/02/15 11:05
 
 clear; close all;
 
-fname='interpedData.mat';
+fname  = 'interpedData.mat';
 myVars = {'grid', 'binParams', 'divV', 'divDR', 'interpParams'};
 load(fname, myVars{:});
-fname='/Users/Danny/Dropbox/LLM_Danny/Contractility/a_0.5_p_1.0_xyrange_100/simdata.mat';
-myVars={'params'};
+
+fname  = 'simdata.mat';
+myVars = {'params'};
 load(fname, myVars{:});
 
 time = params.timestep(1:end-binParams.numTimeSteps); 
 
-if ~exist('divStatsPlots','dir')
-    mkdir('divStatsPlots')
-end
-
-% Strain is a cumulative thing, so get add up the strain over time
-cumStrain = abs(cumsum(divDR, 3));
-
 % Get size of polymers as a length scale...
-actin_length = 0.5;    % From script, variable "actin_length", length of actin monomers in units of um
-nmonomer = 11;         % Number of monomers in each filament
+actin_length  = 0.5;    % From script, variable "actin_length", length of actin monomers in units of um
+nmonomer      = 11;     % Number of monomers in each filament
 polymerLength = floor(actin_length*nmonomer);  % Ensure that we use an integer. Unsure of whether to use floor or ceil. Can try both..
+
+% Look at everything between [-25, 25] in both directions
+innerXInd = grid.x(1,:)>=(-25) & grid.x(1,:)<=(25);
+innerYInd = grid.y(:,1)>=(-25) & grid.y(:,1)<=(25);
+
+innerStrain     = cumStrain(innerXInd, innerYInd, :);
+innerMeanStrain = squeeze(mean(mean(innerStrain)));
+
+% Get some statistics about the strain, the max and the slope to go from 25%-75% of the max value
+maxStrain = max(innerMeanStrain);
+[~, ind25] = min(abs(innerMeanStrain - 0.25*maxStrainAbs));
+[~, ind75] = min(abs(innerMeanStrain - 0.75*maxStrainAbs));
+strainRate2575 = (innerMeanStrain(ind75) - innerMeanStrain(ind25))./(time(ind75) - time(ind25));
+
+% Plot it up
+plot(time, innerMeanStrain)
+xlabel('time (s)')
+ylabel('$\langle |\epsilon|\rangle (t)$', 'Interpreter', 'latex')
+legend(sprintf('Max = %.02f, .25-.75 slope = %.02f', maxStrain, strainRate2575), 'Location', 'SouthEast')
+title({['Average strain']; ['Center region (50 um)^2']});
+prettyFig;
+
+if isunix
+    saveas(gcf, [pwd, '/strain.tif'])
+    saveas(gcf, [pwd, '/strain.fig'])
+elseif ispc
+    saveas(gcf, [pwd, '\strain.tif'])
+    saveas(gcf, [pwd, '\strain.fig'])
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%% This will always give zero, don't do it! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,13 +163,13 @@ polymerLength = floor(actin_length*nmonomer);  % Ensure that we use an integer. 
 %%
 % Now try looking only at the total divergence in an area in the center of the simulation domain
 
-if isunix
-    mkdir('divStatsPlots/strain');
-    mkdir('divStatsPlots/strainrate');
-elseif ispc
-    mkdir('divStatsPlots\strain');
-    mkdir('divStatsPlots\strainrate');
-end
+% if isunix
+%     mkdir('divStatsPlots/strain');
+%     mkdir('divStatsPlots/strainrate');
+% elseif ispc
+%     mkdir('divStatsPlots\strain');
+%     mkdir('divStatsPlots\strainrate');
+% end
 
 % Assuming a square matrix of divergence values, successively cut out first and last row/column, sum, plot, and repeat while domain gets smaller until only a (20 um)^2 region in the center
 
@@ -152,57 +177,57 @@ end
 
 % Look at progressively smaller regions
 % Whole domain is [-L/2, L/2], so start there and cut smaller and smaller to [-L/10, L/10]
-fracs = 2:0.5:10;
+% fracs = 2:0.5:10;
 
-for ii=fracs
+% for ii=fracs
 
-    L_temp = (params.L/ii)*2;
-    innerXInd = grid.x(1,:)>=(-params.L/ii) & grid.x(1,:)<=(params.L/ii);
-    innerYInd = grid.y(:,1)>=(-params.L/ii) & grid.y(:,1)<=(params.L/ii);
+%     L_temp = (params.L/ii)*2;
+%     innerXInd = grid.x(1,:)>=(-params.L/ii) & grid.x(1,:)<=(params.L/ii);
+%     innerYInd = grid.y(:,1)>=(-params.L/ii) & grid.y(:,1)<=(params.L/ii);
 
-    innerDivV = divV(innerXInd, innerYInd, :);
-    innerMeanDivV = squeeze(mean(mean(innerDivV)));
-    plot(time, innerMeanDivV)
-    innerMeanTimeSeries = mean(innerMeanDivV);
-    innerStdTimeSeries  =  std(innerMeanDivV);
-    xlabel('time (s)')
-    ylabel('$\langle \vec{\nabla} \cdot \vec{v} \rangle (t)$', 'Interpreter', 'latex')
-    legend(sprintf('\\mu \\pm \\sigma = %.02e \\pm %.02e', innerMeanTimeSeries, innerStdTimeSeries), 'Location', 'Northwest')
-    title({['Average strain rate']; [sprintf('Center region (%0.02f um)^2', L_temp)]});
-    prettyFig;
+%     innerDivV = divV(innerXInd, innerYInd, :);
+%     innerMeanDivV = squeeze(mean(mean(innerDivV)));
+%     plot(time, innerMeanDivV)
+%     innerMeanTimeSeries = mean(innerMeanDivV);
+%     innerStdTimeSeries  =  std(innerMeanDivV);
+%     xlabel('time (s)')
+%     ylabel('$\langle \vec{\nabla} \cdot \vec{v} \rangle (t)$', 'Interpreter', 'latex')
+%     legend(sprintf('\\mu \\pm \\sigma = %.02e \\pm %.02e', innerMeanTimeSeries, innerStdTimeSeries), 'Location', 'Northwest')
+%     title({['Average strain rate']; [sprintf('Center region (%0.02f um)^2', L_temp)]});
+%     prettyFig;
 
-    %save('interpedData','innerDivV', '-append')
+%     %save('interpedData','innerDivV', '-append')
 
-    if isunix
-        saveas(gcf, [pwd, '/divStatsPlots/strainrate/' , num2str(L_temp), '_strainRate.tif'])
-    elseif ispc
-        saveas(gcf, [pwd, '\divStatsPlots\strainrate\' , num2str(L_temp), '_strainRate.tif'])
-    end
-    clf;
+%     if isunix
+%         saveas(gcf, [pwd, '/divStatsPlots/strainrate/' , num2str(L_temp), '_strainRate.tif'])
+%     elseif ispc
+%         saveas(gcf, [pwd, '\divStatsPlots\strainrate\' , num2str(L_temp), '_strainRate.tif'])
+%     end
+%     clf;
 
-% Same thing for strain
+% % Same thing for strain
 
-    innerStrain = cumStrain(innerXInd, innerYInd, :);
-    innerMeanStrain = squeeze(mean(mean(innerStrain)));
-    plot(time, innerMeanStrain)
-    % Get some statistics about the strain, the max and the slope to go from 25%-75% of the max value
-    maxStrain = max(innerMeanStrain);
+%     innerStrain = cumStrain(innerXInd, innerYInd, :);
+%     innerMeanStrain = squeeze(mean(mean(innerStrain)));
+%     plot(time, innerMeanStrain)
+%     % Get some statistics about the strain, the max and the slope to go from 25%-75% of the max value
+%     maxStrain = max(innerMeanStrain);
     
-    %innerMeanTimeSeries = mean(innerMeanStrain);
-    %innerStdTimeSeries  =  std(innerMeanStrain);
-    xlabel('time (s)')
-    ylabel('$\langle |\epsilon|\rangle (t)$', 'Interpreter', 'latex')
-    %legend(sprintf('\\mu \\pm \\sigma = %.02e \\pm %.02e', innerMeanTimeSeries, innerStdTimeSeries), 'Location', 'Northwest')
-    title({['Average strain']; [sprintf('Center region (%0.02f um)^2', L_temp)]});
-    prettyFig;
+%     %innerMeanTimeSeries = mean(innerMeanStrain);
+%     %innerStdTimeSeries  =  std(innerMeanStrain);
+%     xlabel('time (s)')
+%     ylabel('$\langle |\epsilon|\rangle (t)$', 'Interpreter', 'latex')
+%     %legend(sprintf('\\mu \\pm \\sigma = %.02e \\pm %.02e', innerMeanTimeSeries, innerStdTimeSeries), 'Location', 'Northwest')
+%     title({['Average strain']; [sprintf('Center region (%0.02f um)^2', L_temp)]});
+%     prettyFig;
     
 
-    %save('interpedData','innerStrain', '-append')
+%     %save('interpedData','innerStrain', '-append')
 
-    if isunix
-        saveas(gcf, [pwd, '/divStatsPlots/strain/' , num2str(L_temp), '_strain.tif'])
-    elseif ispc
-        saveas(gcf, [pwd, '\divStatsPlots\strain\' , num2str(L_temp), '_strain.tif'])
-    end
-    clf;
-end
+%     if isunix
+%         saveas(gcf, [pwd, '/divStatsPlots/strain/' , num2str(L_temp), '_strain.tif'])
+%     elseif ispc
+%         saveas(gcf, [pwd, '\divStatsPlots\strain\' , num2str(L_temp), '_strain.tif'])
+%     end
+%     clf;
+% end

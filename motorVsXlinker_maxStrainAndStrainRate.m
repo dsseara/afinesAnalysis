@@ -17,15 +17,18 @@ epsMat = zeros(size(aGrid));
 epsdotMat = zeros(size(aGrid)); %initialize a couple of empty matrices to store phase space data
 fileMat = cell(size(aGrid)); % also store files in same order so we know what's what...
 
-ndt = 1; % This controls what the number of time steps are between calculated positions
-
 for ii = 1:numel(aGrid)
     aVal = aGrid(ii);
     pVal = pGrid(ii);
-    fname = sprintf('a_%0.1f_p_%0.1f', aVal, pVal);
-    [epsmax, epsdotmax] = strainFromDisplacement(fname, ndt);
-    epsMat(ii) = epsmax;
-    epsdotMat(ii) = epsdotmax;
+    fname = sprintf('a-%0.1f-p-%0.1f', aVal, pVal);
+    cd(fname);
+    run('run_read_data.m');     % Create simdata.mat file
+    run('velInterp.m');         % Interpolate velocity and displacement fields to a grid
+    run('divVelocity.m');       % Get the divergence of the velocity and displacement fields to get total normal strain and strain rates
+    run('divStats.m')           % Get statistics, max and 25-75 slope of strain
+    %run('quiverOverlay.m');     % Generate images, quiver overlaid on filaments and on heatmap of velocity divergence
+    epsMat(ii) = maxStrain;
+    epsdotMat(ii) = strainRate2575;
     fileMat{ii} = fname;
 end
 

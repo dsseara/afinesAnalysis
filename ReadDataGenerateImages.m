@@ -2,9 +2,10 @@ clear
 close all
 %%
 run('run_read_data.m');     % Create simdata.mat file
-run('velInterp.m');     % Interpolate velocity and displacement fields to a grid
-run('divVelocity.m');   % Get the divergence of the velocity and displacement fields to get total normal strain and strain rates
-run('quiverOverlay.m'); % Generate images, quiver overlaid on filaments and on heatmap of velocity divergence
+run('velInterp.m');         % Interpolate velocity and displacement fields to a grid
+run('divVelocity.m');       % Get the divergence of the velocity and displacement fields to get total normal strain and strain rates
+run('divStats.m')           % Get statistics, max and 25-75 slope of strain
+run('quiverOverlay.m');     % Generate images, quiver overlaid on filaments and on heatmap of velocity divergence
 
 
 %run('mkactintiffs.m');

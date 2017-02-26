@@ -1,15 +1,15 @@
-% Script for creating an interpolated displacement and velocity field from
-% position of actin beads from AFiNeS simulation
-% 
-% Daniel Seara at 2017/01/09 21:54
+%%
+% Script that interpolates a vector field onto a grid using a Gaussian RBF Function for
+% AFiNeS simulation outputs
+%
+% Created by Daniel Seara at 2017/02/26 13:36
 
 clear;
 close all;
 tic
 
 % Returns simdata.mat if doesn't exist already
-run run_read_data.m
-
+run run_read_data.m;
 
 fname = 'simdata.mat';
 vars = {'adata', 'params'};
@@ -17,7 +17,7 @@ load(fname, vars{:});
 [numBeads, dim, numFrames] = size(adata);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bin velocities before interpolating to reduce noise
 % bins of binSize and have a threshold number nThresh in each bin
 binParams.numTimeSteps = 10; % How many frames between which to calculate velocity
@@ -26,16 +26,12 @@ binParams.binSize = 1; % in um
 binParams.nThresh = 10; % Found by trial and error
 
 % Set all parameters for interpolation
-interpParams.dr = 3; % Size of grid to interpolate to in um
+interpParams.dr = 2; % Size of grid to interpolate to in um
 interpParams.interpRadius = interpParams.dr; % radius of interpolation region, anything beyond it is not considered
 interpParams.d0 = 5 * binParams.binSize; % Freedman et al 2016, S2, width of Gaussian to weight (wider than interpRadius? Seems odd..)
 interpParams.polygon = [];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% xCoords = adata(:,1,1:binParams.numTimeSteps:numFrames);
-% yCoords = adata(:,2,1:binParams.numTimeSteps:numFrames);
-% xBases = squeeze(xCoords(:,:,1:end-1));
-% yBases = squeeze(yCoords(:,:,1:end-1));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 xCoords = squeeze(adata(:,1,:));
 yCoords = squeeze(adata(:,2,:));
@@ -91,8 +87,7 @@ parfor frame=1:size(d.x,2)
     dy(:,:,frame) = interpedDY;
     vx(:,:,frame) = interpedVX;
     vy(:,:,frame) = interpedVY;
-   
-end % end loop over all the frames
+end % end parfor loop over all the frames
 
 grid.dx = dx;
 grid.dy = dy;
@@ -100,5 +95,6 @@ grid.vx = vx;
 grid.vy = vy;
 
 clearvars -except grid d v binParams interpParams
-save([pwd,'/gridSize_3_newVelInterp/interpedData.mat'])
+
+save([pwd,'interpedData.mat'])
 toc
