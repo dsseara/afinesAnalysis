@@ -9,7 +9,7 @@ close all;
 tic
 
 % Returns simdata.mat if doesn't exist already
-run run_read_data.m;
+%run run_read_data.m;
 
 fname = 'simdata.mat';
 vars = {'adata', 'params'};
@@ -27,8 +27,8 @@ binParams.nThresh = 10; % Found by trial and error
 
 % Set all parameters for interpolation
 interpParams.dr = 2; % Size of grid to interpolate to in um
-interpParams.interpRadius = interpParams.dr; % radius of interpolation region, anything beyond it is not considered
-interpParams.d0 = 5 * binParams.binSize; % Freedman et al 2016, S2, width of Gaussian to weight (wider than interpRadius? Seems odd..)
+interpParams.interpRadius = sqrt(2)*interpParams.dr/2; % radius of interpolation region, half of diagonal between grid points
+interpParams.d0 = 5 * binParams.binSize; % Freedman et al 2016, S2, std of Gaussian to weight (See Numerical Recipes, 3.7.2)
 interpParams.polygon = [];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -50,10 +50,13 @@ v.y = d.y./binParams.DeltaT;
 [grid.x, grid.y] = meshgrid(params.xRange(1):interpParams.dr:params.xRange(2), params.yRange(1):interpParams.dr:params.yRange(2));
 gridMat = [grid.x(:) grid.y(:)];
 
+% Empty arrays to store displacements, velocities, and interpolated bead numbers
 dx = NaN([size(grid.x) size(d.x,2)]);
 dy = NaN([size(grid.y) size(d.y,2)]);
 vx = NaN([size(grid.x) size(d.x,2)]);
 vy = NaN([size(grid.y) size(d.y,2)]);
+n  = NaN([size(grid.x) size(d.x,2)]);
+
 [height, width] = size(grid.x);
 
 parfor frame=1:size(d.x,2)
@@ -83,16 +86,20 @@ parfor frame=1:size(d.x,2)
     interpedVX(isnan(interpedVX)) = 0;
     interpedVY(isnan(interpedVY)) = 0;
 
+    interpedN = beadInterp([xbaseFrame, ybaseFrame], grid.x, grid.y);
+
     dx(:,:,frame) = interpedDX;
     dy(:,:,frame) = interpedDY;
     vx(:,:,frame) = interpedVX;
     vy(:,:,frame) = interpedVY;
+    n(:,:,frame)  = interpedN;
 end % end parfor loop over all the frames
 
 grid.dx = dx;
 grid.dy = dy;
 grid.vx = vx;
 grid.vy = vy;
+grid.n  = n;
 
 clearvars -except grid d v binParams interpParams
 

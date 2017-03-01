@@ -27,14 +27,6 @@ elseif isunix
 
 end
 
-if afile == -1
-  error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/actins.txt']);
-elseif mfile == -1 
-  error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/amotors.txt']);
-elseif pfile == -1
-  error('Author:Function:OpenFile', 'Cannot open file: %s', [pwd,'/txt_stack/pmotors.txt']);
-end
-
 % read actin file
 disp('Reading actin file...')
 i=1;

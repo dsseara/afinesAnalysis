@@ -37,6 +37,8 @@ for frame = 1:nFrames
     strainRate.evals(:,:,:,:,frame)  = evals;
     divV(:,:,frame) = sum(sum(evals,3),4);
 end
+divDR = grid.n .* divDR;
+divV  = grid.n .* divV ;
 
 savedVars = {'divDR', 'strain', 'divV', 'strainRate'};
 save('interpedData', savedVars{:}, '-append')
