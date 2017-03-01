@@ -1,4 +1,4 @@
-function [maxStrain, strainRate2575] = divStats()
+%function [maxStrain, strainRate2575] = divStats()
 % This script gets the statistics out of velocity divergence data output
 % running divVelocity.m on a simdata.mat data file that was generated using
 % read_data.m on the actins.txt output of an afines simulation
@@ -17,41 +17,59 @@ myVars = {'params'};
 load(fname, myVars{:});
 
 time = params.timestep(1:end-binParams.numTimeSteps); 
-cumStrain = abs(cumsum(divDR, 3));
+cumStrain = abs(cumsum(divDR, 3))./100; % Normalized by linear dimension of simulatuion, 100 um
+
 
 % Get size of polymers as a length scale...
 actin_length  = 0.5;    % From script, variable "actin_length", length of actin monomers in units of um
 nmonomer      = 11;     % Number of monomers in each filament
 polymerLength = floor(actin_length*nmonomer);  % Ensure that we use an integer
 
-% Look at everything between [-25, 25] in both directions
+% Look at everything
 innerXInd = grid.x(1,:)>=(-50) & grid.x(1,:)<=(50);
 innerYInd = grid.y(:,1)>=(-50) & grid.y(:,1)<=(50);
 
-innerStrain     = cumStrain(innerXInd, innerYInd, :);
-innerMeanStrain = squeeze(mean(mean(innerStrain)));
+innerStrain      = cumStrain(innerXInd, innerYInd, :);
+strainSeries     = squeeze(mean(mean(innerStrain)));
+strainRateSeries = squeeze(mean(mean(divV)));
 
 % Get some statistics about the strain, the max and the slope to go from 25%-75% of the max value
-maxStrain = max(innerMeanStrain);
-[~, ind25] = min(abs(innerMeanStrain - 0.25*maxStrain));
-[~, ind75] = min(abs(innerMeanStrain - 0.75*maxStrain));
-strainRate2575 = (innerMeanStrain(ind75) - innerMeanStrain(ind25))./(time(ind75) - time(ind25));
+maxStrain = max(strainSeries);
+maxStrainRate = max(abs(strainRateSeries))
+
+savedVars = {'maxStrain','maxStrainRate'};
+save('interpedData.mat',savedVars{:},'-append')
+% [~, ind25] = min(abs(innerMeanStrain - 0.25*maxStrain));
+% [~, ind75] = min(abs(innerMeanStrain - 0.75*maxStrain));
+% strainRate2575 = (innerMeanStrain(ind75) - innerMeanStrain(ind25))./(time(ind75) - time(ind25));
 
 % Plot it up
-
-plot(time, innerMeanStrain)
+figure;
+plot(time, strainSeries)
 xlabel('time (s)')
 ylabel('$\langle |\epsilon|\rangle (t)$', 'Interpreter', 'latex')
-legend(sprintf('Max = %.02f, slope(25-75) = %.02f', maxStrain, strainRate2575), 'Location', 'SouthEast')
-title({['Average strain']; ['Center region (100 um)^2']});
-prettyFig;
+title('Strain');
 
 if isunix
-    saveas(gcf, [pwd, '/strain_full.tif'])
-    saveas(gcf, [pwd, '/strain_full.fig'])
+    saveas(gcf, [pwd, '/strain.tif'])
+    saveas(gcf, [pwd, '/strain.fig'])
 elseif ispc
-    saveas(gcf, [pwd, '\strain_full.tif'])
-    saveas(gcf, [pwd, '\strain_full.fig'])
+    saveas(gcf, [pwd, '\strain.tif'])
+    saveas(gcf, [pwd, '\strain.fig'])
+end
+
+figure;
+plot(time, strainRateSeries)
+xlable('time (s)')
+ylabel('$\langle \int \rho(x,y) \nabla \cdot \v \rangle$', 'Interpreter', 'latex')
+title('Strain Rate')
+
+if isunix
+    saveas(gcf, [pwd, '/strainRate.tif'])
+    saveas(gcf, [pwd, '/strainRate.fig'])
+elseif ispc
+    saveas(gcf, [pwd, '\strainRate.tif'])
+    saveas(gcf, [pwd, '\strainRate.fig'])
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
