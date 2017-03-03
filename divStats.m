@@ -35,7 +35,7 @@ strainRateSeries = squeeze(mean(mean(divV)));
 
 % Get some statistics about the strain, the max and the slope to go from 25%-75% of the max value
 maxStrain = max(strainSeries);
-maxStrainRate = max(abs(strainRateSeries))
+maxStrainRate = max(abs(strainRateSeries));
 
 savedVars = {'maxStrain','maxStrainRate'};
 save('interpedData.mat',savedVars{:},'-append')

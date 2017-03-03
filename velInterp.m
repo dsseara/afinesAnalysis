@@ -99,9 +99,9 @@ grid.dx = dx;
 grid.dy = dy;
 grid.vx = vx;
 grid.vy = vy;
-grid.n  = n;
+grid.n  = n./size(xCoords,1); % Normalize according to number of beads
 
 clearvars -except grid d v binParams interpParams
 
-save([pwd,'interpedData.mat'])
+save([pwd,'/interpedData.mat'])
 toc
