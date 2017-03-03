@@ -16,7 +16,7 @@ run('divVelocity.m');
 run('divStats.m');
 ```
 `read_data.m` will produce a file called `simdata.mat` that contains positions over time of the actin, motors, and crosslinkers in `adata`, `mdata`, and `pdata` respectively (the 'p' in `pdata` refers to the fact that AFiNEs calls crosslinkers 'passive motors'). `adata` is an Nx4xM matrix, where N is the number of actin beads and M is the number of time steps. The second dimension is of the form  [x_position y_position link_length filament_id]. There is also a `params` structure created. For example, for a simulation where 1000 frames are taken over 100 seconds in a domain of size 100um x 100um
-```MATLAB
+```
 >> params
 
 params = 
