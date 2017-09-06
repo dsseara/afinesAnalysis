@@ -18,7 +18,7 @@ import numpy as np
 import os
 
 
-def read_data(directory, *args):
+def readData(directory, *args):
     """
     Reads output .txt files form AFiNES simulations
     INPUT
@@ -30,13 +30,17 @@ def read_data(directory, *args):
 
     OUTPUT
     ------
-    3D numpy array that contains positional data in the form of [x, y, t]
+    xyt = 3D numpy array that contains positional data in the form
+          [time, bead, dim]. The x-positions of all beads in the 4th
+          frame is: xyt[4, :, 1]
+
 
     TODO
     ----
     Allow export of different information for different particles. i.e. ID of
     links that motors or cross-linkers are attached to.
     """
+
     fname = os.path.join(directory, args[0])
 
     with open(fname) as f:
@@ -45,7 +49,14 @@ def read_data(directory, *args):
 
     data = np.loadtxt(fname, comments='t', usecols=(0, 1, 3))
     nframes = int(np.ceil(int(data.shape[0] / nparticles)))
-    xyt = np.split(data[:int(nparticles * np.floor(nframes))],
-                   np.floor(nframes))
+    xyt = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
+                   np.floor(nframes)))
 
     return xyt
+
+
+def plotData(xyid):
+    """
+    Takes output from readData and plots the output
+    """
+    return 0
