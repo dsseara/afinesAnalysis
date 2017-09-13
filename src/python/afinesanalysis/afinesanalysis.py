@@ -68,7 +68,7 @@ def makeMovie(xyid, savestuff=False):
     return 0
 
 
-def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
+def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
                         rbfFunc='gaussian', rbfEps=5, savestuff=False):
     """Calculate mass weighted velocity divergence for particles
 
@@ -79,7 +79,7 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
     txy : array_like
         particle x and y positions of time, in shape (frame, bead, (x, y))
     dt : scalar, optional
-        number of frames between which to measure velocity. Default 1
+        number of frames between which to measure velocity. Default 10
     domainSize: scalar, optional
         size of domain used, in same units as the positions given. Used to make
         periodic boundary conditions. Default 50
@@ -140,25 +140,25 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
                                         txyTiled[t, :, 1],
                                         txyTiled[t, :, 0],
                                         statistic=thresh_mean,
-                                        bins=[edgesx, edgesy])[0].flatten()
+                                        bins=[edgesx, edgesy])[0].ravel()
                     for t in range(len(tuv))])
     myt = np.stack([binned_statistic_2d(txyTiled[t, :, 0],
                                         txyTiled[t, :, 1],
                                         txyTiled[t, :, 1],
                                         statistic=thresh_mean,
-                                        bins=[edgesx, edgesy])[0].flatten()
+                                        bins=[edgesx, edgesy])[0].ravel()
                     for t in range(len(tuv))])
     mut = np.stack([binned_statistic_2d(txyTiled[t, :, 0],
                                         txyTiled[t, :, 1],
                                         tuv[t, :, 0],
                                         statistic=thresh_mean,
-                                        bins=[edgesx, edgesy])[0].flatten()
+                                        bins=[edgesx, edgesy])[0].ravel()
                     for t in range(len(tuv))])
     mvt = np.stack([binned_statistic_2d(txyTiled[t, :, 0],
                                         txyTiled[t, :, 1],
                                         tuv[t, :, 1],
                                         statistic=thresh_mean,
-                                        bins=[edgesx, edgesy])[0].flatten()
+                                        bins=[edgesx, edgesy])[0].ravel()
                     for t in range(len(tuv))])
 
     print('calculated bin statistic')
@@ -170,8 +170,8 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
     xi = np.arange(-0.5 * domainSize, 0.5 * domainSize + dr, dr)
     yi = np.arange(-0.5 * domainSize, 0.5 * domainSize + dr, dr)
     xx, yy = np.meshgrid(xi, yi)
-    uut = np.zeros(len(mxyt), len(xi), len(yi))
-    vvt = np.zeros(len(mxyt), len(xi), len(yi))
+    uut = np.zeros((len(mxyt), len(xi), len(yi)))
+    vvt = np.zeros((len(mxyt), len(xi), len(yi)))
 
     for t in range(len(mxyt)):
         idxs = np.logical_and(np.isfinite(mxyt[t, :, 0]),
@@ -193,7 +193,7 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
 
             if savestuff:
                 np.savetxt('velInterp_t{0}.txt'.format(t),
-                           [uu.flatten(), vv.flatten()], '%10.5f')
+                           [uu.ravel(), vv.ravel()], '%10.5f')
 
             uut[t, ...] = uu
             vvt[t, ...] = vv
@@ -201,5 +201,28 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
         else:
             print("No finite data points to use")
 
-
     return [xx, yy, uut, vvt]
+
+
+def massWeightedVelocityDivergence(txy, uut, vvt, dt=10, domainSize=50, dr=1,
+                                   savestuff=False):
+    """ Calculate mass weighted velocity divergence
+
+    """
+
+    xi = np.arange(-0.5 * domainSize - dr, 0.5 * domainSize + dr, dr)
+    yi = np.arange(-0.5 * domainSize - dr, 0.5 * domainSize + dr, dr)
+    divV = np.zeros(len(txy))
+    for frame, pos in enumerate(uut):
+        posx = txy[frame, :, 0]
+        posy = txy[frame, :, 1]
+        binnedMass, xedges, yedges = np.histogram2d(posx, posy,
+                                                    bins=(xi, yi))
+        binnedMass = binnedMass.T
+        uu = uut[frame, ...]
+        vv = vvt[frame, ...]
+        divergence = np.gradient(uu)[1] + np.gradient(vv)[0]
+        weightedDivV = divergence * binnedMass
+        divV[frame] = np.sum(weightedDivV)
+
+    return divV
