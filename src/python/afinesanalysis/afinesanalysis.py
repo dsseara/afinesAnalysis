@@ -170,6 +170,8 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
     xi = np.arange(-0.5 * domainSize, 0.5 * domainSize + dr, dr)
     yi = np.arange(-0.5 * domainSize, 0.5 * domainSize + dr, dr)
     xx, yy = np.meshgrid(xi, yi)
+    uut = np.zeros(len(mxyt), len(xi), len(yi))
+    vvt = np.zeros(len(mxyt), len(xi), len(yi))
 
     for t in range(len(mxyt)):
         idxs = np.logical_and(np.isfinite(mxyt[t, :, 0]),
@@ -193,8 +195,11 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
                 np.savetxt('velInterp_t{0}.txt'.format(t),
                            [uu.flatten(), vv.flatten()], '%10.5f')
 
+            uut[t, ...] = uu
+            vvt[t, ...] = vv
             print('t = {0}'.format(t))
         else:
             print("No finite data points to use")
 
-    return [xx, yy, uu, vv]
+
+    return [xx, yy, uut, vvt]
