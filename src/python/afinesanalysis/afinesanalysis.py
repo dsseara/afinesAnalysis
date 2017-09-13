@@ -22,7 +22,7 @@ import os
 
 def readData(directory, *args):
     """Reads output .txt files from AFiNES simulations
-    INPUT
+    Parameters
     -----
     directory : string
         directory where the files are saved, i.e. foo/bar/txt_stack/
@@ -31,7 +31,7 @@ def readData(directory, *args):
         or "pmotors". Default is "actins". Can be more than one,
         in which case more than one array is output
 
-    OUTPUT
+    Returns
     ------
     xyt = 3D numpy-like array
         position of all particles over time. In shape [time, bead, xyID].
@@ -69,33 +69,40 @@ def makeMovie(xyid, savestuff=False):
 
 
 def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
-                        rbfFunc='gaussian', rbfEps=5):
+                        rbfFunc='gaussian', rbfEps=5, savestuff=False):
     """Calculate mass weighted velocity divergence for particles
-    Velocity interpolation is done using radial basis functions
 
-    INPUT
-    -----
-    txy : 3D numpy-like array
+    Velocity interpolation is done using radial basis function.
+
+    Parameters
+    ----------
+    txy : array_like
         particle x and y positions of time, in shape (frame, bead, (x, y))
-    dt : scalar (optional, default 1)
-        number of frames between which to measure velocity
-    domainSize: scalar (optional, default 50)
+    dt : scalar, optional
+        number of frames between which to measure velocity. Default 1
+    domainSize: scalar, optional
         size of domain used, in same units as the positions given. Used to make
-        periodic boundary conditions
-    nbins : scalar (optional, default 10)
-        number of bins in each direction to use in smoothing data
-    minpts : scalar (optional, default 10)
-        minimum number of beads in a bin to calculate average
-    dr : scalar (optional, default 1)
-        meshgrid size
-    rbfFunc : string (optional, default 'gaussian')
-        functional form to use for radial basis function interplation
-        see docs for scipy.interpolate.Rbf
+        periodic boundary conditions. Default 50
+    nbins : scalar, optional
+        number of bins in each direction to use in smoothing data. Default 10
+    minpts : scalar, optional
+        minimum number of beads in a bin to calculate average. Default 10
+    dr : scalar, optional
+        meshgrid size. Default 1
+    rbfFunc : string, optional
+        functional form to use for radial basis function interplation. If
+        'gaussian' (default), use rbfEps as size of gaussian
+    rbfEps : scalar, optional
+        standard deviation of gaussian used in rbf if rbfFunc='gaussian'
 
-    OUTPUT
+    Returns
     ------
     divV = 3D numpy-like array
         mass weighted velocity divergence on a grid for each frame
+
+    See Also
+    --------
+    scipy.interpolate.Rbf
     """
 
     # To be used in binning data, avoid areas with low number of beads
@@ -162,6 +169,7 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
     # Get interpolated grid positions
     xi = np.arange(-0.5 * domainSize, 0.5 * domainSize + dr, dr)
     yi = np.arange(-0.5 * domainSize, 0.5 * domainSize + dr, dr)
+    xx, yy = np.meshgrid(xi, yi)
 
     for t in range(len(mxyt)):
         idxs = np.logical_and(np.isfinite(mxyt[t, :, 0]),
@@ -172,10 +180,8 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
             rbfv = Rbf(mxyt[t, idxs, 0], mxyt[t, idxs, 1], muvt[t, idxs, 1],
                        function=rbfFunc, epsilon=rbfEps)
 
-            # wu = rbfu.nodes
-            # wv = rbfv.nodes
-            ui = rbfu(xi, yi)
-            vi = rbfv(xi, yi)
+            ui = rbfu(xx, yy)
+            vi = rbfv(xx, yy)
 
             # xywuwve = np.stack([mxyt[t, idxs, 0].flatten(),
             #                     mxyt[t, idxs, 1].flatten(),
@@ -188,4 +194,4 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
         else:
             print("No finite data points to use")
 
-    return [xi, yi, ui, vi]
+    return [xx.flatten(), yy.flatten(), ui.flatten(), vi.flatten()]
