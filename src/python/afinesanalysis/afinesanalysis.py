@@ -180,18 +180,21 @@ def interpolateVelocity(txy, dt=1, domainSize=50, nbins=10, minpts=10, dr=1,
             rbfv = Rbf(mxyt[t, idxs, 0], mxyt[t, idxs, 1], muvt[t, idxs, 1],
                        function=rbfFunc, epsilon=rbfEps)
 
-            ui = rbfu(xx, yy)
-            vi = rbfv(xx, yy)
+            uu = rbfu(xx, yy)
+            vv = rbfv(xx, yy)
 
             # xywuwve = np.stack([mxyt[t, idxs, 0].flatten(),
             #                     mxyt[t, idxs, 1].flatten(),
             #                     wu.flatten(),
             #                     wv.flatten(),
             #                     rbfEps * np.ones(wu.shape[0])], axis=1)
-            # np.savetxt('{0}/t{1}.txt'.format(weightsdir, t), xywuwve, '%10.5f')
+
+            if savestuff:
+                np.savetxt('velInterp_t{0}.txt'.format(t),
+                           [uu.flatten(), vv.flatten()], '%10.5f')
 
             print('t = {0}'.format(t))
         else:
             print("No finite data points to use")
 
-    return [xx.flatten(), yy.flatten(), ui.flatten(), vi.flatten()]
+    return [xx, yy, uu, vv]
