@@ -15,6 +15,7 @@ Daniel Seara
 Created 09/01/2017
 """
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.interpolate import Rbf
 from scipy.stats import binned_statistic_2d
 import os
@@ -22,8 +23,9 @@ import os
 
 def readData(directory, *args):
     """Reads output .txt files from AFiNES simulations
+    
     Parameters
-    -----
+    ----------
     directory : string
         directory where the files are saved, i.e. foo/bar/txt_stack/
     args : string (optional)
@@ -60,11 +62,47 @@ def readData(directory, *args):
     return xyt
 
 
-def makeMovie(xyid, savestuff=False):
-    """
-    Takes output from readData and plots the output as a series of .pngs
-    """
+def makeMovie(xyid, dt, dfilament, savepath=False):
+    """Takes output from readData and plots the output as a series of .pngs
+    Only works for actin data
 
+    Parameters
+    ----------
+    xyid : array_like
+        3D array output of readData
+    dt : scalar
+        plot every dt-th frame
+    dfilament : scalar
+        plot every dfilament-th filament
+
+    savepath : string (optional)
+        path to save series of .pngs. Creates subfolder savePath/imgSeq. If not
+        specified, does not save
+
+
+    Returns
+    -------
+    saves series of .pngs of simulation data
+
+    """
+    if savepath:
+        if not os.path.exists(os.path.join(savepath, 'imgSeq')):
+            os.mkdir(os.path.join(savepath, 'imgSeq'))
+
+
+    domainrange = xyid[..., 0].max() - xyid[..., 0].min()
+
+    for frame, pos in enumerate(xyid[::dt, ...]):
+        fig, ax = plt.subplots()
+
+        for actinID in np.linspace(0,100,101):  #np.unique(pos[..., 2])[::dfilament]:
+            actin = pos[pos[..., 2] == actinID]
+            # dx
+            ax.plot(actin[:, 0], actin[:, 1], 'm')
+
+        ax.set_aspect('equal')
+        # fig.savefig(os.path.join(savepath, 'imgSeq',
+                    # 'frame{0}.png'.format(frame)))
     return 0
 
 
