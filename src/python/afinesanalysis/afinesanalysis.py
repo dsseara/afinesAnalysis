@@ -23,7 +23,7 @@ import os
 
 def readData(directory, *args):
     """Reads output .txt files from AFiNES simulations
-    
+
     Parameters
     ----------
     directory : string
@@ -35,9 +35,10 @@ def readData(directory, *args):
 
     Returns
     ------
-    xyt = 3D numpy-like array
-        position of all particles over time. In shape [time, bead, xyID].
-        x(y)-position of the nth bead in the mth frame is: xyt[m, n, 0(1)]
+    xyt = array_like
+        3D array of position of all particles over time. In shape
+        [time, bead, xyID]. x(y)-position of the nth bead in the mth frame
+        is: xyt[m, n, 0(1)].
         IF ACTINS: filament id of nth bead at mth frame is: xyt[m, n, 2]
 
 
@@ -89,21 +90,24 @@ def makeMovie(xyid, dt, dfilament, savepath=False):
         if not os.path.exists(os.path.join(savepath, 'imgSeq')):
             os.mkdir(os.path.join(savepath, 'imgSeq'))
 
-
-    domainrange = xyid[..., 0].max() - xyid[..., 0].min()
+    domain_range = np.ceil(xyid[..., 0].max() - xyid[..., 0].min())
 
     for frame, pos in enumerate(xyid[::dt, ...]):
         fig, ax = plt.subplots()
 
-        for actinID in np.linspace(0,100,101):  #np.unique(pos[..., 2])[::dfilament]:
-            actin = pos[pos[..., 2] == actinID]
+        for actinID in np.unique(pos[..., 2])[::dfilament]:
+            actin = pos[pos[..., 2] == actinID][:, :2]
+            dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
+            bools = np.reshape(dists > domain_range * 0.9, [dists.size, 1])
+            mask = np.vstack([np.hstack([bools, bools]), [False, False]])
+            masked_actin = np.ma.MaskedArray(actin, mask)
+            # if any(np.abs(np.diff(actin))) > domainrange / 2:
+
             # dx
-            ax.plot(actin[:, 0], actin[:, 1], 'm')
+            ax.plot(masked_actin[:, 0], masked_actin[:, 1], 'm')
 
         ax.set_aspect('equal')
-        # fig.savefig(os.path.join(savepath, 'imgSeq',
-                    # 'frame{0}.png'.format(frame)))
-    return 0
+        fig.savefig(os.path.join(savepath, 'imgSeq', 'frame{number}.png'.format(number=frame)))
 
 
 def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
