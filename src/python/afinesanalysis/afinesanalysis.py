@@ -19,19 +19,56 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import Rbf
 from scipy.stats import binned_statistic_2d
 import os
+import fnmatch
 
 
-def readData(directory, *args):
+def readConfigs(directory):
+    """
+    Reads .cfg file and puts outputs a dictionary
+
+    Parameters
+    ----------
+    directory: string
+        directory where the .cfg file is saved
+
+    Returns
+    -------
+    configs: dict
+        dictionary with keys as the terms on the left hand side of
+        the '=' on each line of the .cfg file in directory, and values
+        as the terms on the right hand side. If the rhs is a number,
+        it is returned as a float
+    """
+    configs = {}
+    for file in os.listdir(directory):
+        if fnmatch.fnmatch(file, '*.cfg'):
+            with open(os.path.join(directory, file)) as f:
+                for line in f:
+                    line = line.split()[0].split('=')
+                    try:
+                        configs[line[0]] = float(line[1])
+                    except:
+                        if line[1] == 'true':
+                            configs[line[0]] = True
+                        elif line[1] == 'false':
+                            configs[line[0]] = False
+                        else:
+                            configs[line[0]] = line[1]
+
+    return configs
+
+
+def readData(directory, filename='actins.txt'):
     """Reads output .txt files from AFiNES simulations
 
     Parameters
     ----------
     directory : string
         directory where the files are saved, i.e. foo/bar/txt_stack/
-    args : string (optional)
-        which particles are analyzed. Options are "actins", "amotors", "links",
-        or "pmotors". Default is "actins". Can be more than one,
-        in which case more than one array is output
+    filename : string (optional)
+        which particles are analyzed. Options are "actins.txt",
+        "amotors.txt", "links.txt", or "pmotors.txt".
+        Default is "actins".
 
     Returns
     ------
@@ -49,7 +86,7 @@ def readData(directory, *args):
     links that motors or cross-linkers are attached to.
     """
 
-    fname = os.path.join(directory, args[0])
+    fname = os.path.join(directory, filename)
 
     with open(fname) as f:
         header = f.readline()
@@ -63,7 +100,7 @@ def readData(directory, *args):
     return xyt
 
 
-def makeMovie(xyid, dt, dfilament, savepath=False):
+def makeMovie(xyid, dt=1, dfilament=1, savepath=False):
     """Takes output from readData and plots the output as a series of .pngs
     Only works for actin data
 
@@ -94,6 +131,7 @@ def makeMovie(xyid, dt, dfilament, savepath=False):
 
     for frame, pos in enumerate(xyid[::dt, ...]):
         fig, ax = plt.subplots()
+        ax.set_xlim(-np.floor(domain_range / 2), np.ceil(domain_range / 2))
 
         for actinID in np.unique(pos[..., 2])[::dfilament]:
             actin = pos[pos[..., 2] == actinID][:, :2]
@@ -107,7 +145,9 @@ def makeMovie(xyid, dt, dfilament, savepath=False):
             ax.plot(masked_actin[:, 0], masked_actin[:, 1], 'm')
 
         ax.set_aspect('equal')
-        fig.savefig(os.path.join(savepath, 'imgSeq', 'frame{number}.png'.format(number=frame)))
+        if savepath:
+            fig.savefig(os.path.join(savepath, 'imgSeq',
+                                     'frame{number}.png'.format(number=frame)))
 
 
 def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
