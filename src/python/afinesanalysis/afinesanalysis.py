@@ -78,7 +78,6 @@ def readData(directory, filename='actins.txt'):
         is: xyt[m, n, 0(1)].
         IF ACTINS: filament id of nth bead at mth frame is: xyt[m, n, 2]
 
-
     TODO
     ----
     - Allow input other than actins
@@ -92,7 +91,7 @@ def readData(directory, filename='actins.txt'):
         header = f.readline()
         nparticles = int(header.split()[-1])
 
-    data = np.loadtxt(fname, comments='t', usecols=(0, 1, 3))
+    data = np.loadtxt(fname, comments='t')
     nframes = int(np.ceil(int(data.shape[0] / nparticles)))
     xyt = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
                    np.floor(nframes)))
@@ -100,7 +99,7 @@ def readData(directory, filename='actins.txt'):
     return xyt
 
 
-def makeMovie(xyid, dt=1, dfilament=1, savepath=False):
+def makeMovie(xyid, configs, dt=1, dfilament=1, savepath=False):
     """Takes output from readData and plots the output as a series of .pngs
     Only works for actin data
 
@@ -108,6 +107,8 @@ def makeMovie(xyid, dt=1, dfilament=1, savepath=False):
     ----------
     xyid : array_like
         3D array output of readData
+    configs : dict
+        dictionary of afines configuration from readConfigs
     dt : scalar
         plot every dt-th frame
     dfilament : scalar
@@ -122,21 +123,27 @@ def makeMovie(xyid, dt=1, dfilament=1, savepath=False):
     -------
     saves series of .pngs of simulation data
 
+    See also
+    --------
+    readConfigs()
     """
     if savepath:
         if not os.path.exists(os.path.join(savepath, 'imgSeq')):
             os.mkdir(os.path.join(savepath, 'imgSeq'))
 
-    domain_range = np.ceil(xyid[..., 0].max() - xyid[..., 0].min())
+    domain_xrange = configs['xrange']
+    domain_yrange = configs['yrange']
 
     for frame, pos in enumerate(xyid[::dt, ...]):
         fig, ax = plt.subplots()
-        ax.set_xlim(-np.floor(domain_range / 2), np.ceil(domain_range / 2))
+        ax.set_xlim(-np.floor(domain_xrange / 2), np.ceil(domain_xrange / 2))
+        ax.set_ylim(-np.floor(domain_yrange / 2), np.ceil(domain_yrange / 2))
 
         for actinID in np.unique(pos[..., 2])[::dfilament]:
             actin = pos[pos[..., 2] == actinID][:, :2]
             dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
-            bools = np.reshape(dists > domain_range * 0.9, [dists.size, 1])
+            bools = np.reshape(dists > np.mean((domain_xrange, domain_yrange)) * 0.9,
+                               [dists.size, 1])
             mask = np.vstack([np.hstack([bools, bools]), [False, False]])
             masked_actin = np.ma.MaskedArray(actin, mask)
             # if any(np.abs(np.diff(actin))) > domainrange / 2:
@@ -148,6 +155,7 @@ def makeMovie(xyid, dt=1, dfilament=1, savepath=False):
         if savepath:
             fig.savefig(os.path.join(savepath, 'imgSeq',
                                      'frame{number}.png'.format(number=frame)))
+            plt.close(fig)
 
 
 def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
