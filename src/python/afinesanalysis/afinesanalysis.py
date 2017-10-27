@@ -22,14 +22,15 @@ import os
 import fnmatch
 
 
-def readConfigs(directory):
+def readConfigs(directory=None):
     """
-    Reads .cfg file and puts outputs a dictionary
+    Reads .cfg file and puts outputs as a dictionary
 
     Parameters
     ----------
-    directory: string
-        directory where the .cfg file is saved
+    directory: string, optional
+        Directory where the .cfg file is saved. If None, then use current
+        directory.
 
     Returns
     -------
@@ -39,6 +40,10 @@ def readConfigs(directory):
         as the terms on the right hand side. If the rhs is a number,
         it is returned as a float
     """
+
+    if directory is None:
+        directory = '.'
+
     configs = {}
     for file in os.listdir(directory):
         if fnmatch.fnmatch(file, '*.cfg'):
@@ -99,96 +104,47 @@ def readData(directory, filename='actins.txt'):
     return xyt
 
 
-def makeMovie(xyid, configs, dt=1, dfilament=1, savepath=False):
-    """Takes output from readData and plots the output as a series of .pngs
-    Only works for actin data
-
-    Parameters
-    ----------
-    xyid : array_like
-        3D array output of readData
-    configs : dict
-        dictionary of afines configuration from readConfigs
-    dt : scalar
-        plot every dt-th frame
-    dfilament : scalar
-        plot every dfilament-th filament
-
-    savepath : string (optional)
-        path to save series of .pngs. Creates subfolder savePath/imgSeq. If not
-        specified, does not save
-
-
-    Returns
-    -------
-    saves series of .pngs of simulation data
-
-    See also
-    --------
-    readConfigs()
-    """
-    if savepath:
-        if not os.path.exists(os.path.join(savepath, 'imgSeq')):
-            os.mkdir(os.path.join(savepath, 'imgSeq'))
-
-    domain_xrange = configs['xrange']
-    domain_yrange = configs['yrange']
-
-    for frame, pos in enumerate(xyid[::dt, ...]):
-        fig, ax = plt.subplots()
-        ax.set_xlim(-np.floor(domain_xrange / 2), np.ceil(domain_xrange / 2))
-        ax.set_ylim(-np.floor(domain_yrange / 2), np.ceil(domain_yrange / 2))
-
-        for actinID in np.unique(pos[..., 2])[::dfilament]:
-            actin = pos[pos[..., 2] == actinID][:, :2]
-            dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
-            bools = np.reshape(dists > np.mean((domain_xrange, domain_yrange)) * 0.9,
-                               [dists.size, 1])
-            mask = np.vstack([np.hstack([bools, bools]), [False, False]])
-            masked_actin = np.ma.MaskedArray(actin, mask)
-            # if any(np.abs(np.diff(actin))) > domainrange / 2:
-
-            # dx
-            ax.plot(masked_actin[:, 0], masked_actin[:, 1], 'm')
-
-        ax.set_aspect('equal')
-        if savepath:
-            fig.savefig(os.path.join(savepath, 'imgSeq',
-                                     'frame{number}.png'.format(number=frame)))
-            plt.close(fig)
-
-
 def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
-                        rbfFunc='gaussian', rbfEps=5, savestuff=False):
-    """Calculate mass weighted velocity divergence for particles
+                        rbfFunc='gaussian', rbfEps=5, savepath=False):
+    """
+    Interpolates velocity field of particles to a grid
 
-    Velocity interpolation is done using radial basis function.
+    Velocity interpolation is done using radial basis functions.
 
     Parameters
     ----------
     txy : array_like
         particle x and y positions of time, in shape (frame, bead, (x, y))
     dt : scalar, optional
-        number of frames between which to measure velocity. Default 10
+        number of frames between which to measure velocity. Defaults to 10
     domainSize: scalar, optional
         size of domain used, in same units as the positions given. Used to make
-        periodic boundary conditions. Default 50
+        periodic boundary conditions. Defaults to 50
     nbins : scalar, optional
-        number of bins in each direction to use in smoothing data. Default 10
+        number of bins in each direction to use in smoothing data.
+        Defaults to 10.
     minpts : scalar, optional
-        minimum number of beads in a bin to calculate average. Default 10
+        minimum number of beads in a bin to calculate average. Defaults to 10
     dr : scalar, optional
-        meshgrid size. Default 1
+        meshgrid size. Defaults to 1
     rbfFunc : string, optional
         functional form to use for radial basis function interplation. If
         'gaussian' (default), use rbfEps as size of gaussian
     rbfEps : scalar, optional
         standard deviation of gaussian used in rbf if rbfFunc='gaussian'
+    savepath : str, optional
+        Directory to save outputs. If savepath=None, then use current directory
 
     Returns
     ------
-    divV = 3D numpy-like array
-        mass weighted velocity divergence on a grid for each frame
+    xx : array_like
+        2D interpolation grid x positions
+    yy : array_like
+        2D interpolation grid y positions
+    uut : array_like
+        2+1-D x components of velocity at each grid point
+    vvt : array_like
+        2+1-D y-components of velocity at each grid point
 
     See Also
     --------
@@ -281,13 +237,21 @@ def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
             #                     wv.flatten(),
             #                     rbfEps * np.ones(wu.shape[0])], axis=1)
 
-            if savestuff:
-                np.savetxt('velInterp_t{0}.txt'.format(t),
-                           [uu.ravel(), vv.ravel()], '%10.5f')
+            if savepath:
+                if savepath is not None:
+                    np.savetxt(os.path.join(savepath, 'velInterp_t{0}.txt'.format(t)),
+                               [uu.ravel(), vv.ravel()], '%10.5f')
+                    np.savetxt(os.path.join(savepath, 'gridInterp_t{0}.txt'.format(t)),
+                               [xx.ravel(), yy.ravel()], '%10.5f')
+                else:
+                    np.savetxt('velInterp_t{0}.txt'.format(t),
+                               [uu.ravel(), vv.ravel()])
+                    np.savetxt('gridInterp_t{0}.txt'.format(t),
+                               [xx.ravel(), vv.ravel()])
 
             uut[t, ...] = uu
             vvt[t, ...] = vv
-            print('t = {0}'.format(t))
+            print('t = {0}'.format(t), end='\r')
         else:
             print("No finite data points to use")
 
