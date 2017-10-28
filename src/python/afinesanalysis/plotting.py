@@ -5,18 +5,51 @@ Module to plot outputs of afines
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
+import os
 
 
-def animateQuiver(xx, yy, uut, vvt):
+def animateQuiver(xx, yy, uut, vvt, taxis=0):
     '''
-    creates an animated quiver plot of velocities
+    creates an animated quiver plot of a vector field (u(x,y), v(x,y))
+
+    Parameters
+    ----------
+    xx : array_like
+        2D array of grid points
+    yy : array_like
+        2D array of grid points
+    uut : array_like
+        x-component of vector field over time
+    vvt : array_like
+        y-component of vector field over time
+    taxis : scalar, optional
+        axis along which time is measured. Defaults to 0
+
+    Returns
+    -------
+    anim : animation object
+        animation object must be returned to display animation when
+        calling animation.FuncAnimation from a function.
+
     '''
+
+    # Make sure time is first dimension
+    uut = np.rollaxis(uut, taxis)
+    vvt = np.rollaxis(vvt, taxis)
+
     fig, ax = plt.subplots()
     Q = ax.quiver(xx, yy, uut[0, ...], vvt[0, ...], pivot='mid')
     anim = animation.FuncAnimation(fig, _update_quiver, frames=uut.shape[0],
                                    fargs=(Q, uut, vvt), blit=False)
 
-    plt.show()
+    return anim
+
+
+def _update_quiver(frame, Q, uut, vvt):
+    '''
+    Helper function for animateQuiver
+    '''
+    Q.set_UVC(uut[frame, ...], vvt[frame, ...])
 
 
 def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
@@ -36,7 +69,6 @@ def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
     savepath : string (optional)
         path to save series of .pngs. Creates subfolder savePath/imgSeq. If not
         specified, does not save
-
 
     Returns
     -------
@@ -75,13 +107,3 @@ def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
             fig.savefig(os.path.join(savepath, 'imgSeq',
                                      'frame{number}.png'.format(number=frame)))
             plt.close(fig)
-
-
-def _update_quiver(frame, Q, uut, vvt):
-    '''
-    Helper function for animateQuiver
-    '''
-    u = uut[frame, ...]
-    v = vvt[frame, ...]
-    Q.set_UVC(u,v)
-    return Q,
