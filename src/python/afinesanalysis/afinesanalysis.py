@@ -15,7 +15,7 @@ Daniel Seara
 Created 09/01/2017
 """
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 from scipy.interpolate import Rbf
 from scipy.stats import binned_statistic_2d
 import os
@@ -63,21 +63,21 @@ def readConfigs(directory=None):
     return configs
 
 
-def readData(directory, filename='actins.txt'):
+def readData(filename, nframes, dt, dataframe=False):
     """Reads output .txt files from AFiNES simulations
 
     Parameters
     ----------
-    directory : string
-        directory where the files are saved, i.e. foo/bar/txt_stack/
-    filename : string (optional)
-        which particles are analyzed. Options are "actins.txt",
+    filename : string
+        name of file to load. Optional are "actins.txt",
         "amotors.txt", "links.txt", or "pmotors.txt".
         Default is "actins".
+    dataframe : bool, optional
+        If True, read the data as a pandas DataFrame
 
     Returns
     ------
-    xyt = array_like
+    data = array_like
         3D array of position of all particles over time. In shape
         [time, bead, xyID]. x(y)-position of the nth bead in the mth frame
         is: xyt[m, n, 0(1)].
@@ -90,18 +90,26 @@ def readData(directory, filename='actins.txt'):
     links that motors or cross-linkers are attached to.
     """
 
-    fname = os.path.join(directory, filename)
+    txtFile = filename.split(os.path.sep)[-1]
 
-    with open(fname) as f:
+    with open(filename) as f:
         header = f.readline()
         nparticles = int(header.split()[-1])
 
-    data = np.loadtxt(fname, comments='t')
-    nframes = int(np.ceil(int(data.shape[0] / nparticles)))
-    xyt = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
-                   np.floor(nframes)))
+    if dataframe:
+        data = pd.read_csv(filename, header=None, comment='t', delimiter='\t')
+        if txtFile is 'actins.txt':
+            data.columns = ['x', 'y', 'link_length', 'fid']
+        elif txtFile in ['amotors.txt', 'pmotors.txt']:
+            data.columns = ['x0', 'y0', 'x1', 'y1',
+                            'fidx0', 'fidx1', 'lidx0', 'lidx1']
+        data['t'] = np.arange(0, nframes).repeat(nparticles) * dt
+    else:
+        data = np.loadtxt(filename, comments='t')
+        data = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
+                        np.floor(nframes)))
 
-    return xyt
+    return data
 
 
 def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,

@@ -102,7 +102,7 @@ def clusterFilaments(xlinker, filaments):
     '''
     filaments['clusterID'] = (-1 * np.ones(len(filaments))).astype(int)
 
-    for time in pd.unique(filaments.t):
+    for time in np.unique(filaments.t):
         g = nx.Graph()
         edges = (xlinker[xlinker.t == time]
                  .dropna(subset=['fidx0', 'fidx1'])[['fidx0', 'fidx1']].values)
