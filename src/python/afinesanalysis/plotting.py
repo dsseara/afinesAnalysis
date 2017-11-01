@@ -66,7 +66,7 @@ def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
         plot every dt-th frame
     dfilament : scalar
         plot every dfilament-th filament
-    savepath : string (optional)
+    savepath : bool or string, optional
         path to save series of .pngs. Creates subfolder savePath/imgSeq. If not
         specified, does not save
 
@@ -78,6 +78,9 @@ def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
     --------
     readConfigs()
     """
+    if savepath is True:
+        savepath = os.curdir
+
     if savepath:
         if not os.path.exists(os.path.join(savepath, 'imgSeq')):
             os.mkdir(os.path.join(savepath, 'imgSeq'))

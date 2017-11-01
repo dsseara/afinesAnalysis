@@ -63,7 +63,7 @@ def readConfigs(directory=None):
     return configs
 
 
-def readData(filename, nframes, dt, dataframe=False):
+def readData(filename, configs, dataframe=False):
     """Reads output .txt files from AFiNES simulations
 
     Parameters
@@ -91,6 +91,8 @@ def readData(filename, nframes, dt, dataframe=False):
     """
 
     txtFile = filename.split(os.path.sep)[-1]
+    nframes = configs['nframes']
+    dt = configs['dt']
 
     with open(filename) as f:
         header = f.readline()
