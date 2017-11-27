@@ -20,46 +20,50 @@ from scipy.interpolate import Rbf
 from scipy.stats import binned_statistic_2d
 import os
 import fnmatch
+import glob
 
 
-def readConfigs(directory=None):
+def readConfigs(filename=None):
     """
     Reads .cfg file and puts outputs as a dictionary
 
     Parameters
     ----------
-    directory: string, optional
-        Directory where the .cfg file is saved. If None, then use current
-        directory.
+    filename: string, optional
+        .cfg file to read. If None, then use current .cfg file in current
+        directory
 
     Returns
     -------
     configs: dict
-        dictionary with keys as the terms on the left hand side of
-        the '=' on each line of the .cfg file in directory, and values
-        as the terms on the right hand side. If the rhs is a number,
-        it is returned as a float
+        keys and values are parameter names and parameter inputs in filename.
+        If parameter input is a number, it is returned as a float
     """
 
-    if directory is None:
-        directory = '.'
+    if filename is None:
+        if len(glob.glob('./*cfg')) > 1:
+            raise ValueError('More than 1 cfg file in current directory.')
+        elif len(glob.glob('./*cfg')) == 0:
+            raise ValueError('0 cfg files in current directory')
+        else:
+            filename = glob.glob('./*cfg')[0]
+
+    if not os.path.isfile(filename):
+        raise ValueError('Could not find ' + filename)
 
     configs = {}
-    for file in os.listdir(directory):
-        if fnmatch.fnmatch(file, '*.cfg'):
-            with open(os.path.join(directory, file)) as f:
-                for line in f:
-                    line = line.split()[0].split('=')
-                    try:
-                        configs[line[0]] = float(line[1])
-                    except:
-                        if line[1] == 'true':
-                            configs[line[0]] = True
-                        elif line[1] == 'false':
-                            configs[line[0]] = False
-                        else:
-                            configs[line[0]] = line[1]
-
+    with open(filename) as f:
+        for line in f:
+            line = line.split()[0].split('=')
+            try:
+                configs[line[0]] = float(line[1])
+            except:
+                if line[1] == 'true':
+                    configs[line[0]] = True
+                elif line[1] == 'false':
+                    configs[line[0]] = False
+                else:
+                    configs[line[0]] = line[1]
     return configs
 
 
@@ -92,7 +96,7 @@ def readData(filename, configs, dataframe=False):
 
     txtFile = filename.split(os.path.sep)[-1]
     nframes = configs['nframes']
-    dt = configs['dt']
+    dt_frame = (configs['tfinal'] - configs['tinit']) / nframes
 
     with open(filename) as f:
         header = f.readline()
@@ -100,12 +104,12 @@ def readData(filename, configs, dataframe=False):
 
     if dataframe:
         data = pd.read_csv(filename, header=None, comment='t', delimiter='\t')
-        if txtFile is 'actins.txt':
+        if txtFile in 'actins.txt':
             data.columns = ['x', 'y', 'link_length', 'fid']
         elif txtFile in ['amotors.txt', 'pmotors.txt']:
             data.columns = ['x0', 'y0', 'x1', 'y1',
                             'fidx0', 'fidx1', 'lidx0', 'lidx1']
-        data['t'] = np.arange(0, nframes).repeat(nparticles) * dt
+        data['t'] = np.arange(0, nframes + 1).repeat(nparticles) * dt_frame
     else:
         data = np.loadtxt(filename, comments='t')
         data = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
