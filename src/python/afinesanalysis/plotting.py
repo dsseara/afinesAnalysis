@@ -52,14 +52,15 @@ def _update_quiver(frame, Q, uut, vvt):
     Q.set_UVC(uut[frame, ...], vvt[frame, ...])
 
 
-def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
+def filaments(data, configs, dt=1, dfilament=1, savepath=False):
     """Takes output from readData and plots the output as a series of .pngs
     Only works for actin data
 
     Parameters
     ----------
-    xyid : array_like
-        3D array output of readData
+    data : array_like
+        Output of readData, shape (nframes, nbeads, 4). Last index refers to
+        x position, y position, link_length, and filament_id, respectively
     configs : dict
         dictionary of afines configuration from readConfigs
     dt : scalar
@@ -68,7 +69,7 @@ def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
         plot every dfilament-th filament
     savepath : bool or string, optional
         path to save series of .pngs. Creates subfolder savePath/imgSeq. If not
-        specified, does not save
+        specified, does not save. If True, uses current directory
 
     Returns
     -------
@@ -76,7 +77,7 @@ def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
 
     See also
     --------
-    readConfigs()
+    afinesanalysis.readConfigs()
     """
     if savepath is True:
         savepath = os.curdir
@@ -85,18 +86,18 @@ def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
         if not os.path.exists(os.path.join(savepath, 'imgSeq')):
             os.mkdir(os.path.join(savepath, 'imgSeq'))
 
-    domain_xrange = configs['xrange']
-    domain_yrange = configs['yrange']
+    rangex = configs['xrange']
+    rangey = configs['yrange']
 
-    for frame, pos in enumerate(xyid[::dt, ...]):
+    for frame, pos in enumerate(data[::dt, ...]):
         fig, ax = plt.subplots()
-        ax.set_xlim(-np.floor(domain_xrange / 2), np.ceil(domain_xrange / 2))
-        ax.set_ylim(-np.floor(domain_yrange / 2), np.ceil(domain_yrange / 2))
+        ax.set_xlim(-np.floor(rangex / 2), np.ceil(rangex / 2))
+        ax.set_ylim(-np.floor(rangey / 2), np.ceil(rangey / 2))
 
-        for actinID in np.unique(pos[..., 2])[::dfilament]:
-            actin = pos[pos[..., 2] == actinID][:, :2]
+        for actinID in np.unique(pos[..., -1])[::dfilament]:
+            actin = pos[pos[..., -1] == actinID][:, :2]
             dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
-            bools = np.reshape(dists > np.mean((domain_xrange, domain_yrange)) * 0.9,
+            bools = np.reshape(dists > np.mean((rangex, rangey)) * 0.9,
                                [dists.size, 1])
             mask = np.vstack([np.hstack([bools, bools]), [False, False]])
             masked_actin = np.ma.MaskedArray(actin, mask)
@@ -110,3 +111,32 @@ def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
             fig.savefig(os.path.join(savepath, 'imgSeq',
                                      'frame{number}.png'.format(number=frame)))
             plt.close(fig)
+
+
+def motors(data, configs, dt=1, dfilament=1, savepath=False):
+    """Takes output from readData and plots the output as a series of .pngs
+    Only works for actin data
+
+    Parameters
+    ----------
+    data : array_like
+        Output of readData, shape (nframes, nbeads, 4). Last index refers to
+        x position, y position, link_length, and filament_id, respectively
+    configs : dict
+        dictionary of afines configuration from readConfigs
+    dt : scalar
+        plot every dt-th frame
+    dfilament : scalar
+        plot every dfilament-th filament
+    savepath : bool or string, optional
+        path to save series of .pngs. Creates subfolder savePath/imgSeq. If not
+        specified, does not save. If True, uses current directory
+
+    Returns
+    -------
+    saves series of .pngs of simulation data
+
+    See also
+    --------
+    readConfigs()
+    """

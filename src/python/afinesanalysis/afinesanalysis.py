@@ -67,7 +67,7 @@ def readConfigs(filename=None):
     return configs
 
 
-def readData(filename, configs, dataframe=False):
+def readData(filename, configs, dataframe=True):
     """Reads output .txt files from AFiNES simulations
 
     Parameters
@@ -75,17 +75,15 @@ def readData(filename, configs, dataframe=False):
     filename : string
         name of file to load. Optional are "actins.txt",
         "amotors.txt", "links.txt", or "pmotors.txt".
-        Default is "actins".
+        Defaults to "actins".
     dataframe : bool, optional
-        If True, read the data as a pandas DataFrame
+        If True, read the data as a pandas DataFrame. Else, read
+        in as numpy array. Defaults to True.
 
     Returns
     ------
-    data = array_like
-        3D array of position of all particles over time. In shape
-        [time, bead, xyID]. x(y)-position of the nth bead in the mth frame
-        is: xyt[m, n, 0(1)].
-        IF ACTINS: filament id of nth bead at mth frame is: xyt[m, n, 2]
+    data : DataFrame or array_like
+        parsed from filename
 
     TODO
     ----
@@ -95,6 +93,10 @@ def readData(filename, configs, dataframe=False):
     """
 
     txtFile = filename.split(os.path.sep)[-1]
+    if txtFile.split('.')[0] not in ['actins', 'amotors', 'pmotors', 'links']:
+        raise ValueError(txtFile + ' not recognized. Options are actins.txt, \
+                         amotors.txt, links.txt, or pmotors.txt')
+
     nframes = configs['nframes']
     dt_frame = (configs['tfinal'] - configs['tinit']) / nframes
 
@@ -109,7 +111,7 @@ def readData(filename, configs, dataframe=False):
         elif txtFile in ['amotors.txt', 'pmotors.txt']:
             data.columns = ['x0', 'y0', 'x1', 'y1',
                             'fidx0', 'fidx1', 'lidx0', 'lidx1']
-        data['t'] = np.arange(0, nframes + 1).repeat(nparticles) * dt_frame
+        data['t'] = np.arange(0, nframes).repeat(nparticles) * dt_frame
     else:
         data = np.loadtxt(filename, comments='t')
         data = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
@@ -118,8 +120,9 @@ def readData(filename, configs, dataframe=False):
     return data
 
 
-def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
-                        rbfFunc='gaussian', rbfEps=5, savepath=False):
+def interpolateVelocity(data, configs, dt=10, domainSize=50, nbins=10,
+                        minpts=10, dr=1, rbfFunc='gaussian', rbfEps=5,
+                        savepath=False):
     """
     Interpolates velocity field of particles to a grid
 
@@ -127,8 +130,8 @@ def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
 
     Parameters
     ----------
-    txy : array_like
-        particle x and y positions of time, in shape (frame, bead, (x, y))
+    data : DataFrame or array_like
+        output from readData. If numpy array, shape (nframes, nbeads, 2).
     dt : scalar, optional
         number of frames between which to measure velocity. Defaults to 10
     domainSize: scalar, optional
@@ -162,8 +165,14 @@ def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
 
     See Also
     --------
-    scipy.interpolate.Rbf
+    scipy.interpolate.Rbf()
+    afinesanalysis.readData()
     """
+
+    if type(data) == np.ndarray:
+        txy = data[..., :2]
+    elif type(data) == pd.core.frame.DataFrame:
+        for index, time in enumerate(pd.unique(data.t))
 
     # To be used in binning data, avoid areas with low number of beads
     def thresh_mean(arr):
@@ -195,7 +204,7 @@ def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
     edgesy = np.linspace(-domainSize, domainSize, 2 * nbins + 1)
     print('imported data')
 
-    # Smooth data by averaging locally and only averaging with enough particles
+    # Smooth data by averaging locally only in regions with enough particles
     mxt = np.stack([binned_statistic_2d(txyTiled[t, :, 0],
                                         txyTiled[t, :, 1],
                                         txyTiled[t, :, 0],
@@ -253,9 +262,11 @@ def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
 
             if savepath:
                 if savepath is not None:
-                    np.savetxt(os.path.join(savepath, 'velInterp_t{0}.txt'.format(t)),
+                    np.savetxt(os.path.join(savepath,
+                               'velInterp_t{0}.txt'.format(t)),
                                [uu.ravel(), vv.ravel()], '%10.5f')
-                    np.savetxt(os.path.join(savepath, 'gridInterp_t{0}.txt'.format(t)),
+                    np.savetxt(os.path.join(savepath,
+                               'gridInterp_t{0}.txt'.format(t)),
                                [xx.ravel(), yy.ravel()], '%10.5f')
                 else:
                     np.savetxt('velInterp_t{0}.txt'.format(t),
