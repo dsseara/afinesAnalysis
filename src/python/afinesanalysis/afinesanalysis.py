@@ -114,7 +114,7 @@ def readData(filename, configs, dataframe=False):
     return data
 
 
-def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
+def interpolateVelocity(txy, configs, dt=10, nbins=10, minpts=10, dr=1,
                         rbfFunc='gaussian', rbfEps=5, savepath=False):
     """
     Interpolates velocity field of particles to a grid
@@ -125,11 +125,10 @@ def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
     ----------
     txy : array_like
         particle x and y positions of time, in shape (frame, bead, (x, y))
+    configs : dict
+        dictionary of configurations used to run AFINES. See readConfigs()
     dt : scalar, optional
         number of frames between which to measure velocity. Defaults to 10
-    domainSize: scalar, optional
-        size of domain used, in same units as the positions given. Used to make
-        periodic boundary conditions. Defaults to 50
     nbins : scalar, optional
         number of bins in each direction to use in smoothing data.
         Defaults to 10.
@@ -159,6 +158,7 @@ def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
     See Also
     --------
     scipy.interpolate.Rbf
+    afinesanalysis.afinesanalys.readConfigs()
     """
 
     # To be used in binning data, avoid areas with low number of beads
@@ -167,6 +167,9 @@ def interpolateVelocity(txy, dt=10, domainSize=50, nbins=10, minpts=10, dr=1,
             return np.nan
         else:
             return arr.mean()
+
+    # Only considers square domains for now
+    domainSize = configs['xrange']
 
     # Tile positions to simulate periodic boundary conditions
     rxyt = txy + np.array([domainSize, 0])
