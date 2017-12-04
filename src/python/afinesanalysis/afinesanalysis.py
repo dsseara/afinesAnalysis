@@ -169,17 +169,33 @@ def interpolateVelocity(data, configs, dt=10, domainSize=50, nbins=10,
     afinesanalysis.readData()
     """
 
-    if type(data) == np.ndarray:
-        txy = data[..., :2]
-    elif type(data) == pd.core.frame.DataFrame:
-        for index, time in enumerate(pd.unique(data.t))
+    def _thresh_mean(arr):
+        '''
+        Helper function for interpolateVelocity to calculate mean of array if
+        threshold number of points available
 
-    # To be used in binning data, avoid areas with low number of beads
-    def thresh_mean(arr):
+        Parameters
+        ----------
+        arr : array_like
+            1D array-like object
+        Returns
+        -------
+        thresh_mean : scalar
+            mean of arr iff len(arr) >= minimum number of points
+        '''
         if len(arr) < minpts:
             return np.nan
         else:
             return arr.mean()
+
+    # Load data depending on what type it is
+    if type(data) == np.ndarray:
+        txy = data[..., :2]
+    elif type(data) == pd.core.frame.DataFrame:
+        txy = data.iloc[:, :2].values
+        txy = txy.reshape((int(configs['nframes']),
+                           int(configs['npolymer'] * configs['nmonomer']),
+                           2))
 
     # Tile positions to simulate periodic boundary conditions
     rxyt = txy + np.array([domainSize, 0])
