@@ -19,7 +19,6 @@ import pandas as pd
 from scipy.interpolate import Rbf
 from scipy.stats import binned_statistic_2d
 import os
-import fnmatch
 import glob
 
 
@@ -81,7 +80,7 @@ def readData(filename, configs, dataframe=False):
 
     Returns
     ------
-    data = array_like
+    data : array_like
         3D array of position of all particles over time. In shape
         [time, bead, xyID]. x(y)-position of the nth bead in the mth frame
         is: xyt[m, n, 0(1)].
@@ -89,9 +88,6 @@ def readData(filename, configs, dataframe=False):
 
     TODO
     ----
-    - Allow input other than actins
-    - Allow export of different information for different particles. i.e. ID of
-    links that motors or cross-linkers are attached to.
     """
 
     txtFile = filename.split(os.path.sep)[-1]
