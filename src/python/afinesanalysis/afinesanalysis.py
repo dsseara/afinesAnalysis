@@ -19,7 +19,6 @@ import pandas as pd
 from scipy.interpolate import Rbf
 from scipy.stats import binned_statistic_2d
 import os
-import fnmatch
 import glob
 
 
@@ -82,14 +81,19 @@ def readData(filename, configs, dataframe=True):
 
     Returns
     ------
+<<<<<<< HEAD
     data : DataFrame or array_like
         parsed from filename
+=======
+    data : array_like
+        3D array of position of all particles over time. In shape
+        [time, bead, xyID]. x(y)-position of the nth bead in the mth frame
+        is: xyt[m, n, 0(1)].
+        IF ACTINS: filament id of nth bead at mth frame is: xyt[m, n, 2]
+>>>>>>> origin/master
 
     TODO
     ----
-    - Allow input other than actins
-    - Allow export of different information for different particles. i.e. ID of
-    links that motors or cross-linkers are attached to.
     """
 
     txtFile = filename.split(os.path.sep)[-1]
@@ -120,9 +124,9 @@ def readData(filename, configs, dataframe=True):
     return data
 
 
-def interpolateVelocity(data, configs, dt=10, domainSize=50, nbins=10,
-                        minpts=10, dr=1, rbfFunc='gaussian', rbfEps=5,
-                        savepath=False):
+
+def interpolateVelocity(data, configs, dt=10, nbins=10, minpts=10, dr=1,
+                        rbfFunc='gaussian', rbfEps=5, savepath=False):
     """
     Interpolates velocity field of particles to a grid
 
@@ -132,11 +136,10 @@ def interpolateVelocity(data, configs, dt=10, domainSize=50, nbins=10,
     ----------
     data : DataFrame or array_like
         output from readData. If numpy array, shape (nframes, nbeads, 2).
+    configs : dict
+        dictionary of configurations used to run AFINES. See readConfigs()
     dt : scalar, optional
         number of frames between which to measure velocity. Defaults to 10
-    domainSize: scalar, optional
-        size of domain used, in same units as the positions given. Used to make
-        periodic boundary conditions. Defaults to 50
     nbins : scalar, optional
         number of bins in each direction to use in smoothing data.
         Defaults to 10.
@@ -165,8 +168,8 @@ def interpolateVelocity(data, configs, dt=10, domainSize=50, nbins=10,
 
     See Also
     --------
-    scipy.interpolate.Rbf()
-    afinesanalysis.readData()
+    scipy.interpolate.Rbf
+    afinesanalysis.afinesanalys.readConfigs()
     """
 
     def _thresh_mean(arr):
@@ -196,6 +199,9 @@ def interpolateVelocity(data, configs, dt=10, domainSize=50, nbins=10,
         txy = txy.reshape((int(configs['nframes']),
                            int(configs['npolymer'] * configs['nmonomer']),
                            2))
+
+    # Only considers square domains for now
+    domainSize = configs['xrange']
 
     # Tile positions to simulate periodic boundary conditions
     rxyt = txy + np.array([domainSize, 0])

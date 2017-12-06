@@ -53,6 +53,31 @@ def _update_quiver(frame, Q, uut, vvt):
 
 
 def filaments(data, configs, dt=1, dfilament=1, savepath=False):
+for index, time in enumerate(pd.unique(filaments.t)):
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    data = filaments.loc[filaments.t==time]
+    colors = sns.color_palette('viridis', len(pd.unique(data.clusterID)))
+    #print(colors)
+    for ID, data2 in data.groupby('filamentID'):
+        cid = pd.unique(data2.clusterID)[0]
+        #print(cid)
+        actin = data2[['x','y']].values
+        dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
+        bools = np.reshape(dists > np.mean((domain_xrange, domain_yrange)) * 0.9,
+                           [dists.size, 1])
+        mask = np.vstack([np.hstack([bools, bools]), [False, False]])
+        masked_actin = np.ma.MaskedArray(actin, mask)
+        if cid == -1:
+            ax.plot(masked_actin[:, 0], masked_actin[:, 1], color='k')
+        else:
+            ax.plot(masked_actin[:, 0], masked_actin[:, 1], color=colors[cid])
+    fig.savefig('coloredCluster{0}.png'.format(index))
+    plt.close('all')
+
+
+def plotFilaments(xyid, configs, dt=1, dfilament=1, savepath=False):
+>>>>>>> origin/master
     """Takes output from readData and plots the output as a series of .pngs
     Only works for actin data
 
