@@ -114,7 +114,7 @@ def readData(filename, configs, dataframe=False):
     return data
 
 
-def interpolateVelocity(txy, configs, dt=10, nbins=10, minpts=10, dr=1,
+def interpolateVelocity(data, configs, dt=10, nbins=10, minpts=10, dr=1,
                         rbfFunc='gaussian', rbfEps=5, savepath=False):
     """
     Interpolates velocity field of particles to a grid
@@ -123,8 +123,8 @@ def interpolateVelocity(txy, configs, dt=10, nbins=10, minpts=10, dr=1,
 
     Parameters
     ----------
-    txy : array_like
-        particle x and y positions of time, in shape (frame, bead, (x, y))
+    data : array_like
+       output of readData
     configs : dict
         dictionary of configurations used to run AFINES. See readConfigs()
     dt : scalar, optional
@@ -159,15 +159,24 @@ def interpolateVelocity(txy, configs, dt=10, nbins=10, minpts=10, dr=1,
     --------
     scipy.interpolate.Rbf
     afinesanalysis.afinesanalys.readConfigs()
+    afinesanalysis.afinesanalys.readData()
     """
 
     # To be used in binning data, avoid areas with low number of beads
-    def thresh_mean(arr):
+    def _thresh_mean(arr):
         if len(arr) < minpts:
             return np.nan
         else:
             return arr.mean()
 
+    # Load data depending on what type it is
+    if type(data) == np.ndarray:
+        txy = data[..., :2]
+    elif type(data) == pd.core.frame.DataFrame:
+        txy = data.iloc[:, :2].values
+        txy = txy.reshape((int(configs['nframes']),
+                           int(configs['npolymer'] * configs['nmonomer']),
+                           2))
     # Only considers square domains for now
     domainSize = configs['xrange']
 
@@ -198,25 +207,25 @@ def interpolateVelocity(txy, configs, dt=10, nbins=10, minpts=10, dr=1,
     mxt = np.stack([binned_statistic_2d(txyTiled[t, :, 0],
                                         txyTiled[t, :, 1],
                                         txyTiled[t, :, 0],
-                                        statistic=thresh_mean,
+                                        statistic=_thresh_mean,
                                         bins=[edgesx, edgesy])[0].ravel()
                     for t in range(len(tuv))])
     myt = np.stack([binned_statistic_2d(txyTiled[t, :, 0],
                                         txyTiled[t, :, 1],
                                         txyTiled[t, :, 1],
-                                        statistic=thresh_mean,
+                                        statistic=_thresh_mean,
                                         bins=[edgesx, edgesy])[0].ravel()
                     for t in range(len(tuv))])
     mut = np.stack([binned_statistic_2d(txyTiled[t, :, 0],
                                         txyTiled[t, :, 1],
                                         tuv[t, :, 0],
-                                        statistic=thresh_mean,
+                                        statistic=_thresh_mean,
                                         bins=[edgesx, edgesy])[0].ravel()
                     for t in range(len(tuv))])
     mvt = np.stack([binned_statistic_2d(txyTiled[t, :, 0],
                                         txyTiled[t, :, 1],
                                         tuv[t, :, 1],
-                                        statistic=thresh_mean,
+                                        statistic=_thresh_mean,
                                         bins=[edgesx, edgesy])[0].ravel()
                     for t in range(len(tuv))])
 
