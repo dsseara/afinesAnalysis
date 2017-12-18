@@ -81,16 +81,8 @@ def readData(filename, configs, dataframe=True):
 
     Returns
     ------
-<<<<<<< HEAD
     data : DataFrame or array_like
         parsed from filename
-=======
-    data : array_like
-        3D array of position of all particles over time. In shape
-        [time, bead, xyID]. x(y)-position of the nth bead in the mth frame
-        is: xyt[m, n, 0(1)].
-        IF ACTINS: filament id of nth bead at mth frame is: xyt[m, n, 2]
->>>>>>> origin/master
 
     TODO
     ----
@@ -122,7 +114,6 @@ def readData(filename, configs, dataframe=True):
                         np.floor(nframes)))
 
     return data
-
 
 
 def interpolateVelocity(data, configs, dt=10, nbins=10, minpts=10, dr=1,
