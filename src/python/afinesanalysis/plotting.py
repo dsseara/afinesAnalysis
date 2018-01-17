@@ -174,19 +174,28 @@ def all(filamentData, pmotorData, amotorData, configs,
             ax.plot(masked_actin[:, 0], masked_actin[:, 1], 'k', linewidth=0.5)
         # End loop over all filaments
 
-        # plot motors and cross-linkers. Note that the x(y) position of the
-        # second head is really x(y)0 + x(y)1, not just x(y)1
-        amotorxs = amotorData.loc[amotorData.t == time][['x0', 'x1']].values
-        amotorxs[:, 1] = amotorxs.sum(axis=1)
-        amotorys = amotorData.loc[amotorData.t == time][['y0', 'y1']].values
-        amotorys[:, 1] = amotorys.sum(axis=1)
-        pmotorxs = pmotorData.loc[pmotorData.t == time][['x0', 'x1']].values
-        pmotorxs[:, 1] = pmotorxs.sum(axis=1)
-        pmotorys = pmotorData.loc[pmotorData.t == time][['y0', 'y1']].values
-        pmotorys[:, 1] = pmotorys.sum(axis=1)
+        # plot motors and cross-linkers. Note that the x/y position of the
+        # second head is really x0/y0 + x1/y1, not just x1/y1
+        if not amotorData.empty:
+            amotorxs = amotorData.loc[amotorData.t == time][['x0', 'x1']].values
+            amotorxs[:, 1] = amotorxs.sum(axis=1)
+            amotorxs = amotorxs[amotorxs[:, 1] < (rangex / 2), :]
 
-        ax.plot(amotorxs.T, amotorys.T, '.-', color='c', MarkerSize=2)  #, alpha=0.2)
-        ax.plot(pmotorxs.T, pmotorys.T, '.-', color='r', MarkerSize=2)  #, alpha=0.2)
+            amotorys = amotorData.loc[amotorData.t == time][['y0', 'y1']].values
+            amotorys[:, 1] = amotorys.sum(axis=1)
+            amotorys = amotorys[amotorys[:, 1] < (rangey / 2), :]
+
+            ax.plot(amotorxs.T, amotorys.T, '.-', color='c', MarkerSize=2)  #, alpha=0.2)
+        if not pmotorData.empty:
+            pmotorxs = pmotorData.loc[pmotorData.t == time][['x0', 'x1']].values
+            pmotorxs[:, 1] = pmotorxs.sum(axis=1)
+            pmotorxs = pmotorxs[pmotorxs[:, 1] < (rangex / 2), :]
+
+            pmotorys = pmotorData.loc[pmotorData.t == time][['y0', 'y1']].values
+            pmotorys[:, 1] = pmotorys.sum(axis=1)
+            pmotorys = pmotorys[pmotorys[:, 1] < (rangey / 2), :]
+
+            ax.plot(pmotorxs.T, pmotorys.T, '.-', color='r', MarkerSize=2)  #, alpha=0.2)
 
         ax.set_aspect('equal')
 
