@@ -86,51 +86,60 @@ def filaments(filas, configs, dt=1, dfilament=1, savepath=False):
     if savepath:
         if not os.path.exists(os.path.join(savepath, 'imgSeq')):
             os.mkdir(os.path.join(savepath, 'imgSeq'))
+        savepath = os.path.join(savepath, 'imgSeq')
 
     rangex = configs['xrange']
     rangey = configs['yrange']
 
-    for index, time in enumerate(pd.unique(filas.t)):
+    for tind, time in enumerate(pd.unique(filas.t)[::dt]):
         fig, ax = plt.subplots()
         ax.set_aspect('equal')
         data = filas.loc[filas.t == time]
-        for ID, data2 in data.groupby('fid'):
-            actin = data2[['x', 'y']].values
+        for idindex, ID in enumerate(pd.unique(data.fid)[::dfilament]):
+            actin = data[data.fid == ID][['x', 'y']].values
             dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
             bools = np.reshape(dists > np.mean((rangex, rangey)) * 0.9,
                                [dists.size, 1])
             mask = np.vstack([np.hstack([bools, bools]), [False, False]])
             masked_actin = np.ma.MaskedArray(actin, mask)
-            ax.plot(masked_actin[:, 0], masked_actin[:, 1], 'm')
+            ax.plot(masked_actin[:, 0], masked_actin[:, 1], 'k', linewidth=0.5)
         # End loop over all filaments
         ax.set_aspect('equal')
 
         if savepath:
-            fig.savefig(os.path.join(savepath, 'imgSeq',
-                                     'frame{number}.png'.format(number=time)))
+            fig.savefig(os.path.join(savepath, 't{n:0.1f}.png'.format(n=tind)))
             plt.close(fig)
     # End loop over all times
 # End filaments
 
 
-def motors(data, configs, dt=1, dfilament=1, savepath=False):
+def all(filamentData, pmotorData, amotorData, configs,
+        dt=1, dfilament=1, dpmotors=1, damotors=1, savepath=False):
     """Takes output from readData and plots the output as a series of .pngs
-    Only works for actin data
+    Plots filaments, crosslinkers (pmotors) and motors (amotors)
 
     Parameters
     ----------
-    data : array_like
-        Output of readData, shape (nframes, nbeads, 4). Last index refers to
-        x position, y position, link_length, and filament_id, respectively
+    filamentData : pandas DataFrame
+        Output of readData containing filament data.
+    pmotorData : pandas DataFrame
+        Output of readData containing pmotor data.
+    amotorData : pandas DataFrame
+        Output of readData containing amotor data.
     configs : dict
         dictionary of afines configuration from readConfigs
     dt : scalar
-        plot every dt-th frame
+        plot every dt-th frame. Defaults to 1
     dfilament : scalar
-        plot every dfilament-th filament
-    savepath : bool or string, optional
-        path to save series of .pngs. Creates subfolder savePath/imgSeq. If not
-        specified, does not save. If True, uses current directory
+        plot every dfilament-th filament. Defaults to 1
+    dpmotor : scalar
+        plot every dpmotor-th pmotor. Defaults to 1
+    damotor : scalar
+        plot every damotor-th amotor. Defaults to 1
+    savepath : {bool, string}, optional
+        path to save series of .pngs. Creates subfolder savePath/imgSeq. If,
+        False, does not save. If True, uses current directory.
+        Defaults to False.
 
     Returns
     -------
@@ -140,3 +149,49 @@ def motors(data, configs, dt=1, dfilament=1, savepath=False):
     --------
     readConfigs()
     """
+    if savepath is True:
+        savepath = os.curdir
+
+    if savepath:
+        if not os.path.exists(os.path.join(savepath, 'imgSeq')):
+            os.mkdir(os.path.join(savepath, 'imgSeq'))
+        savepath = os.path.join(savepath, 'imgSeq')
+
+    rangex = configs['xrange']
+    rangey = configs['yrange']
+
+    for tind, time in enumerate(pd.unique(filamentData.t)[::dt]):
+        fig, ax = plt.subplots()
+
+        data = filamentData.loc[filamentData.t == time]
+        for idindex, ID in enumerate(pd.unique(data.fid)[::dfilament]):
+            actin = data[data.fid == ID][['x', 'y']].values
+            dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
+            bools = np.reshape(dists > np.mean((rangex, rangey)) * 0.9,
+                               [dists.size, 1])
+            mask = np.vstack([np.hstack([bools, bools]), [False, False]])
+            masked_actin = np.ma.MaskedArray(actin, mask)
+            ax.plot(masked_actin[:, 0], masked_actin[:, 1], 'k', linewidth=0.5)
+        # End loop over all filaments
+
+        # plot motors and cross-linkers. Note that the x(y) position of the
+        # second head is really x(y)0 + x(y)1, not just x(y)1
+        amotorxs = amotorData.loc[amotorData.t == time][['x0', 'x1']].values
+        amotorxs[:, 1] = amotorxs.sum(axis=1)
+        amotorys = amotorData.loc[amotorData.t == time][['y0', 'y1']].values
+        amotorys[:, 1] = amotorys.sum(axis=1)
+        pmotorxs = pmotorData.loc[pmotorData.t == time][['x0', 'x1']].values
+        pmotorxs[:, 1] = pmotorxs.sum(axis=1)
+        pmotorys = pmotorData.loc[pmotorData.t == time][['y0', 'y1']].values
+        pmotorys[:, 1] = pmotorys.sum(axis=1)
+
+        ax.plot(amotorxs.T, amotorys.T, '.-', color='c', MarkerSize=2)  #, alpha=0.2)
+        ax.plot(pmotorxs.T, pmotorys.T, '.-', color='r', MarkerSize=2)  #, alpha=0.2)
+
+        ax.set_aspect('equal')
+
+        if savepath:
+            fig.savefig(os.path.join(savepath, 't{n:0.1f}.png'.format(n=time)))
+            plt.close(fig)
+    # End loop over all times
+# End filaments
