@@ -179,25 +179,27 @@ def all(filamentData, pmotorData, amotorData, configs,
         if not amotorData.empty:
             amotorxs = amotorData.loc[amotorData.t == time][['x0', 'x1']].values
             amotorxs[:, 1] = amotorxs.sum(axis=1)
-            amotorxs = amotorxs[amotorxs[:, 1] < (rangex / 2), :]
+            # amotorxs = amotorxs[amotorxs[:, 1] < (rangex / 2), :]
 
             amotorys = amotorData.loc[amotorData.t == time][['y0', 'y1']].values
             amotorys[:, 1] = amotorys.sum(axis=1)
-            amotorys = amotorys[amotorys[:, 1] < (rangey / 2), :]
+            # amotorys = amotorys[amotorys[:, 1] < (rangey / 2), :]
 
             ax.plot(amotorxs.T, amotorys.T, '.-', color='c', MarkerSize=2)  #, alpha=0.2)
         if not pmotorData.empty:
             pmotorxs = pmotorData.loc[pmotorData.t == time][['x0', 'x1']].values
             pmotorxs[:, 1] = pmotorxs.sum(axis=1)
-            pmotorxs = pmotorxs[pmotorxs[:, 1] < (rangex / 2), :]
+            # pmotorxs = pmotorxs[pmotorxs[:, 1] < (rangex / 2), :]
 
             pmotorys = pmotorData.loc[pmotorData.t == time][['y0', 'y1']].values
             pmotorys[:, 1] = pmotorys.sum(axis=1)
-            pmotorys = pmotorys[pmotorys[:, 1] < (rangey / 2), :]
+            # pmotorys = pmotorys[pmotorys[:, 1] < (rangey / 2), :]
 
             ax.plot(pmotorxs.T, pmotorys.T, '.-', color='r', MarkerSize=2)  #, alpha=0.2)
 
         ax.set_aspect('equal')
+        ax.set_xlim([-rangex / 2, rangex / 2])
+        ax.set_ylim([-rangey / 2, rangey / 2])
 
         if savepath:
             fig.savefig(os.path.join(savepath, 't{n:0.1f}.png'.format(n=time)))
