@@ -107,7 +107,7 @@ def readData(filename, configs, dataframe=True):
         elif txtFile in ['amotors.txt', 'pmotors.txt']:
             data.columns = ['x0', 'y0', 'x1', 'y1',
                             'fidx0', 'fidx1', 'lidx0', 'lidx1']
-        data['t'] = np.arange(0, nframes+1).repeat(nparticles) * dt_frame
+        data['t'] = np.arange(0, nframes).repeat(nparticles) * dt_frame
     else:
         data = np.loadtxt(filename, comments='t')
         data = np.array(np.split(data[:int(nparticles * np.floor(nframes))],

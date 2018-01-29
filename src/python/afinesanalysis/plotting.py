@@ -68,8 +68,9 @@ def filaments(filas, configs, dt=1, dfilament=1, savepath=False):
     dfilament : scalar
         plot every dfilament-th filament
     savepath : bool or string, optional
-        path to save series of .pngs. Creates subfolder savePath/imgSeq. If not
-        specified, does not save. If True, uses current directory
+        path to save series of .pngs. Creates subfolder savepath in current
+        dir. Creates subfolder imgSeq in current dir if True. If False, does
+        not save. Defaults to False
 
     Returns
     -------
@@ -81,12 +82,12 @@ def filaments(filas, configs, dt=1, dfilament=1, savepath=False):
     """
 
     if savepath is True:
-        savepath = os.curdir
+        savepath = os.path.join(os.curdir, 'imgSeq')
 
     if savepath:
-        if not os.path.exists(os.path.join(savepath, 'imgSeq')):
-            os.mkdir(os.path.join(savepath, 'imgSeq'))
-        savepath = os.path.join(savepath, 'imgSeq')
+        if not os.path.exists(os.path.join(os.curdir, savepath)):
+            os.mkdir(os.path.join(os.curdir, savepath))
+        savepath = os.path.join(os.curdir, savepath)
 
     rangex = configs['xrange']
     rangey = configs['yrange']
@@ -105,6 +106,9 @@ def filaments(filas, configs, dt=1, dfilament=1, savepath=False):
             ax.plot(masked_actin[:, 0], masked_actin[:, 1], 'k', linewidth=0.5)
         # End loop over all filaments
         ax.set_aspect('equal')
+        ax.set_xlim([-rangex / 2, rangex / 2])
+        ax.set_ylim([-rangey / 2, rangey / 2])
+        plt.tight_layout()
 
         if savepath:
             fig.savefig(os.path.join(savepath, 't{n:0.1f}.png'.format(n=tind)))
@@ -150,12 +154,12 @@ def all(filamentData, pmotorData, amotorData, configs,
     readConfigs()
     """
     if savepath is True:
-        savepath = os.curdir
+        savepath = os.path.join(os.curdir, 'imgSeq')
 
     if savepath:
-        if not os.path.exists(os.path.join(savepath, 'imgSeq')):
-            os.mkdir(os.path.join(savepath, 'imgSeq'))
-        savepath = os.path.join(savepath, 'imgSeq')
+        if not os.path.exists(os.path.join(os.curdir, savepath)):
+            os.mkdir(os.path.join(os.curdir, savepath))
+        savepath = os.path.join(os.curdir, savepath)
 
     rangex = configs['xrange']
     rangey = configs['yrange']
@@ -200,6 +204,7 @@ def all(filamentData, pmotorData, amotorData, configs,
         ax.set_aspect('equal')
         ax.set_xlim([-rangex / 2, rangex / 2])
         ax.set_ylim([-rangey / 2, rangey / 2])
+        plt.tight_layout()
 
         if savepath:
             fig.savefig(os.path.join(savepath, 't{n:0.1f}.png'.format(n=time)))
