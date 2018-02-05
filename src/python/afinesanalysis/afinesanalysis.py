@@ -20,6 +20,7 @@ from scipy.interpolate import Rbf
 from scipy.stats import binned_statistic_2d
 import os
 import glob
+import warnings
 
 
 def readConfigs(filename=None):
@@ -100,18 +101,22 @@ def readData(filename, configs, dataframe=True):
         header = f.readline()
         nparticles = int(header.split()[-1])
 
-    if dataframe:
-        data = pd.read_csv(filename, header=None, comment='t', delimiter='\t')
-        if txtFile in 'actins.txt':
-            data.columns = ['x', 'y', 'link_length', 'fid']
-        elif txtFile in ['amotors.txt', 'pmotors.txt']:
-            data.columns = ['x0', 'y0', 'x1', 'y1',
-                            'fidx0', 'fidx1', 'lidx0', 'lidx1']
-        data['t'] = np.arange(0, nframes).repeat(nparticles) * dt_frame
+    if nparticles > 0:
+        if dataframe:
+            data = pd.read_csv(filename, header=None, comment='t', delimiter='\t')
+            if txtFile in 'actins.txt':
+                data.columns = ['x', 'y', 'link_length', 'fid']
+            elif txtFile in ['amotors.txt', 'pmotors.txt']:
+                data.columns = ['x0', 'y0', 'x1', 'y1',
+                                'fidx0', 'fidx1', 'lidx0', 'lidx1']
+            data['t'] = np.arange(0, nframes).repeat(nparticles) * dt_frame
+        else:
+            data = np.loadtxt(filename, comments='t')
+            data = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
+                            np.floor(nframes)))
     else:
-        data = np.loadtxt(filename, comments='t')
-        data = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
-                        np.floor(nframes)))
+        warnings.warn(filename + ' is empty. Creating empty DataFrame in its place')
+        data = pd.DataFrame()
 
     return data
 

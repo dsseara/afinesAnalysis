@@ -93,13 +93,14 @@ def filaments(filas, configs, dt=1, dfilament=1, savepath=False):
     rangey = configs['yrange']
 
     for tind, time in enumerate(pd.unique(filas.t)[::dt]):
+        print(time)
         fig, ax = plt.subplots()
         ax.set_aspect('equal')
         data = filas.loc[filas.t == time]
         for idindex, ID in enumerate(pd.unique(data.fid)[::dfilament]):
             actin = data[data.fid == ID][['x', 'y']].values
             dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
-            bools = np.reshape(dists > np.mean((rangex, rangey)) * 0.9,
+            bools = np.reshape(dists > rangex * 0.9,
                                [dists.size, 1])
             mask = np.vstack([np.hstack([bools, bools]), [False, False]])
             masked_actin = np.ma.MaskedArray(actin, mask)
@@ -111,7 +112,7 @@ def filaments(filas, configs, dt=1, dfilament=1, savepath=False):
         plt.tight_layout()
 
         if savepath:
-            fig.savefig(os.path.join(savepath, 't{n:0.1f}.png'.format(n=tind)))
+            fig.savefig(os.path.join(savepath, 't{n:0.2f}.png'.format(n=time)))
             plt.close(fig)
     # End loop over all times
 # End filaments
@@ -171,7 +172,7 @@ def all(filamentData, pmotorData, amotorData, configs,
         for idindex, ID in enumerate(pd.unique(data.fid)[::dfilament]):
             actin = data[data.fid == ID][['x', 'y']].values
             dists = np.linalg.norm(np.diff(actin, 1, 0), axis=1)
-            bools = np.reshape(dists > np.mean((rangex, rangey)) * 0.9,
+            bools = np.reshape(dists > rangex * 0.9,
                                [dists.size, 1])
             mask = np.vstack([np.hstack([bools, bools]), [False, False]])
             masked_actin = np.ma.MaskedArray(actin, mask)
@@ -207,7 +208,7 @@ def all(filamentData, pmotorData, amotorData, configs,
         plt.tight_layout()
 
         if savepath:
-            fig.savefig(os.path.join(savepath, 't{n:0.1f}.png'.format(n=time)))
+            fig.savefig(os.path.join(savepath, 't{n:0.2f}.png'.format(n=time)))
             plt.close(fig)
     # End loop over all times
 # End filaments
