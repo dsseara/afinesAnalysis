@@ -1,5 +1,7 @@
 import argparse
 import os
+import matplotlib
+matplotlib.use('Agg')
 import afinesanalysis.afinesanalysis as aa
 import afinesanalysis.plotting as pltaf
 
