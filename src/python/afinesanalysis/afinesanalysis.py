@@ -94,7 +94,7 @@ def readData(filename, configs, dataframe=True):
         raise ValueError(txtFile + ' not recognized. Options are actins.txt, \
                          amotors.txt, links.txt, or pmotors.txt')
 
-    nframes = configs['nframes']
+    # nframes = configs['nframes']
     dt_frame = (configs['tfinal'] - configs['tinit']) / nframes
 
     with open(filename) as f:
@@ -104,12 +104,13 @@ def readData(filename, configs, dataframe=True):
     if nparticles > 0:
         if dataframe:
             data = pd.read_csv(filename, header=None, comment='t', delimiter='\t')
+            nframes = len(data.iloc[:, 0]) / nparticles
             if txtFile in 'actins.txt':
                 data.columns = ['x', 'y', 'link_length', 'fid']
             elif txtFile in ['amotors.txt', 'pmotors.txt']:
                 data.columns = ['x0', 'y0', 'x1', 'y1',
                                 'fidx0', 'fidx1', 'lidx0', 'lidx1']
-            data['t'] = np.arange(0, nframes+1).repeat(nparticles) * dt_frame
+            data['t'] = np.arange(0, nframes).repeat(nparticles) * dt_frame
         else:
             data = np.loadtxt(filename, comments='t')
             data = np.array(np.split(data[:int(nparticles * np.floor(nframes))],
